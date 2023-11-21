@@ -1,14 +1,15 @@
 import hashlib
 import itertools
 import os
+import random
 
 
 # ref. https://en.bitcoin.it/wiki/BIP_0039
 #  * https://github.com/trezor/python-mnemonic
-#  * https://allprivatekeys.com/mnemonic-code-converter
-#  * https://mnemonic-phrase-generator.com/
+
 
 PBKDF2_ROUNDS = 2048
+SUPPORTED_STRENGTH = {128, 256}
 SUPPORTED_WORD_LENGTH = {12, 15, 18, 21, 24}
 
 with open("wordlist.txt", mode="r", encoding="utf-8") as f:
@@ -19,20 +20,20 @@ def to_clipboard(string):
     os.system(f"echo {str(string)} | xsel --clipboard --input")
 
 
-def generate_mnemonic(strength, entropy=None):
-    DELIMITER = " "
+def gen_entropy(strength):
+    assert strength in SUPPORTED_STRENGTH
+    return os.urandom(strength // 8)
 
-    assert strength in {128, 256}
-    length = strength // 8
-    entropy = entropy if entropy else os.urandom(length)
-    print("given entropy:\t", entropy)
+
+def generate_mnemonic(entropy):
+    DELIMITER = " "
 
     hex_hash = hashlib.sha256(entropy).hexdigest()
 
     bin_hash = bin(
         int.from_bytes(entropy, byteorder="big")
-    )[2:].zfill(length * 8)
-    checksum = bin(int(hex_hash, 16))[2:].zfill(256)[:length * 8 // 32]
+    )[2:].zfill(len(entropy) * 8)
+    checksum = bin(int(hex_hash, 16))[2:].zfill(256)[:len(entropy) * 8 // 32]
 
     b = bin_hash + checksum
 
@@ -80,10 +81,10 @@ def mnemonics2seed(mnemonic, passphrase=""):
         salt=salt.encode("utf-8"),
         iterations=PBKDF2_ROUNDS,
     )
-    return streched[:64]
+    return streched[:64].hex()
 
 
-def mnemonics2entopy(mnemonic):
+def recover_entropy(mnemonic):
     words = mnemonic.split(" ")
     assert len(words) in SUPPORTED_WORD_LENGTH
 
@@ -118,29 +119,57 @@ def mnemonics2entopy(mnemonic):
     return bytes(entropy)
 
 
-def main():
-    mnemonic = generate_mnemonic(strength=128, entropy=None)
-    checked = check(mnemonic)
-    seed = mnemonics2seed(mnemonic)
-    entropy = mnemonics2entopy(mnemonic)
+def tmp_gen_entropy(i, strength, lim):
+    entropy = (i).to_bytes(strength, byteorder="big")[-strength//8:]
+    # entropy = random.randint(1, lim).to_bytes(strength, byteorder="big")[-strength//8:]
+    # entropy = os.urandom(strength // 8)
+    return entropy
 
-    to_clipboard(mnemonic)
+
+def get_balance(mnemonic):
+    return False
+
+
+def find(strength):
+    assert strength in SUPPORTED_STRENGTH
+    lim = 2 ** strength
+
+    for i in range(lim):
+        entropy = tmp_gen_entropy(i, strength, lim)
+        mnemonic = generate_mnemonic(entropy)
+        assert check(mnemonic)
+
+        if get_balance(mnemonic):
+            print(i, "\t", mnemonic)
+            with open("found.txt", mode="a", encoding="utf-8") as f:
+                f.write(mnemonic + "\n")
+
+
+def main():
+    entropy = gen_entropy(strength=128)
+    mnemonic = generate_mnemonic(entropy)
+    seed = mnemonics2seed(mnemonic)
+    recovered_entropy = recover_entropy(mnemonic)
+
+    assert check(mnemonic)
+    assert entropy == recovered_entropy
+
     print("mnemonic:\t", mnemonic)
-    print("checked:\t", checked)
     print("seed:\t", seed)
     print("entropy:\t", entropy)
+    print("recovered:\t", recovered_entropy)
 
-    # strength = 12
-    # aa = os.urandom(strength)
-    # bb = int.from_bytes(aa, byteorder="big")
-    # cc = (bb).to_bytes(strength, byteorder="big")
-
-    # print(aa)
-    # print(bb)
-    # print(cc)
-
-    # BIP39: add mnemonic to addr
-    # * final check on metamask
+    to_clipboard(mnemonic)
 
 
+# find(strength=128)
 main()
+
+# * final check on metamask
+# * add diff btc/eth
+# * check actual balance wallet sometimes
+# * seed to addr
+
+# Test
+#  * https://allprivatekeys.com/mnemonic-code-converter
+#  * https://mnemonic-phrase-generator.com/
