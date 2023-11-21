@@ -1,0 +1,5 @@
+base58==2.1.1
+ecdsa==0.18.0
+ripemd-hash==1.0.1
+six==1.16.0
+tqdm==4.66.1
