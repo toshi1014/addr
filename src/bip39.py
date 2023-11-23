@@ -1,11 +1,10 @@
 import hashlib
 import itertools
 import os
-import random
 
 
 # ref. https://en.bitcoin.it/wiki/BIP_0039
-#  * https://github.com/trezor/python-mnemonic
+#    * https://github.com/trezor/python-mnemonic
 
 
 PBKDF2_ROUNDS = 2048
@@ -119,32 +118,6 @@ def recover_entropy(mnemonic):
     return bytes(entropy)
 
 
-def tmp_gen_entropy(i, strength, lim):
-    entropy = (i).to_bytes(strength, byteorder="big")[-strength//8:]
-    # entropy = random.randint(1, lim).to_bytes(strength, byteorder="big")[-strength//8:]
-    # entropy = os.urandom(strength // 8)
-    return entropy
-
-
-def get_balance(mnemonic):
-    return False
-
-
-def find(strength):
-    assert strength in SUPPORTED_STRENGTH
-    lim = 2 ** strength
-
-    for i in range(lim):
-        entropy = tmp_gen_entropy(i, strength, lim)
-        mnemonic = generate_mnemonic(entropy)
-        assert check(mnemonic)
-
-        if get_balance(mnemonic):
-            print(i, "\t", mnemonic)
-            with open("found.txt", mode="a", encoding="utf-8") as f:
-                f.write(mnemonic + "\n")
-
-
 def main():
     entropy = gen_entropy(strength=128)
     mnemonic = generate_mnemonic(entropy)
@@ -162,8 +135,8 @@ def main():
     to_clipboard(mnemonic)
 
 
-# find(strength=128)
-main()
+if __name__ == "__main__":
+    main()
 
 # * final check on metamask
 # * add diff btc/eth

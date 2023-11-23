@@ -1,4 +1,4 @@
-from tools import prikey2pubkey, pubkey2addr, prikey2wif, wif2prikey
+from src.tools import prikey2pubkey, pubkey2addr, prikey2wif, wif2prikey
 
 
 def all(prikey, testnet, compressed):

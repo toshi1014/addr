@@ -1,5 +1,14 @@
 import datetime
-from tqdm import tqdm
+import json
+import requests
+
+
+def read_config():
+    with open("config.json", mode="r", encoding="utf-8") as f:
+        return json.loads(f.read())
+
+
+config = read_config()
 
 
 def with_timer(*arg_wrapper, **kwargs_wrapper):
@@ -18,24 +27,13 @@ def with_timer(*arg_wrapper, **kwargs_wrapper):
     return _with_timer
 
 
-def func(i):
-    # print(i)
-    ...
-
-
-def gen(arg):
-    for g in range(arg):
-        yield g
-
-
-@with_timer(template="Delta: {time} (s)")
-def run():
-    arg = 2**28
-    # rng = range(arg)
-    rng = gen(arg)
-
-    for i in tqdm(rng, total=arg):
-        func(i)
-
-
-run()
+def notify(msg):
+    try:
+        requests.post(
+            url="https://notify-api.line.me/api/notify",
+            headers={"Authorization": "Bearer " + config["LINE_TOKEN"]},
+            data={"message": msg},
+            timeout=30,
+        )
+    except Exception:
+        ...
