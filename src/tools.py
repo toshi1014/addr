@@ -150,3 +150,21 @@ def is_valid_wif(wif):
     expected_checksum = dec[-8:]
 
     return checksum.hex() == expected_checksum.hex()
+
+
+def test():
+    import json
+
+    with open("cases.json", "r", encoding="utf-8") as f:
+        cases = json.loads(f.read())
+
+    for case in cases:
+        prikey = wif2prikey(case["wif"])
+        pubkey = prikey2pubkey(prikey)
+        wif = prikey2wif(prikey, testnet=False, compressed=True)
+        addr = pubkey2addr(pubkey, testnet=False)
+
+        assert wif == case["wif"]
+        assert pubkey == case["pubkey"]
+        assert addr == case["addr"]
+        assert is_valid_wif(wif)

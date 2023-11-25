@@ -2,3 +2,5 @@ env?
 __pycache__
 memo.md
 found.txt
+addr_list*.tsv
+*.db

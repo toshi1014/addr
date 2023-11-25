@@ -1,6 +1,8 @@
+import binascii
 import hashlib
 import itertools
 import os
+from .hdkey import HDKey
 
 
 # ref. https://en.bitcoin.it/wiki/BIP_0039
@@ -11,28 +13,27 @@ PBKDF2_ROUNDS = 2048
 SUPPORTED_STRENGTH = {128, 256}
 SUPPORTED_WORD_LENGTH = {12, 15, 18, 21, 24}
 
+
 with open("wordlist.txt", mode="r", encoding="utf-8") as f:
     WORDLIST = f.read().split("\n")[:-1]
 
 
-def to_clipboard(string):
-    os.system(f"echo {str(string)} | xsel --clipboard --input")
-
-
 def gen_entropy(strength):
     assert strength in SUPPORTED_STRENGTH
-    return os.urandom(strength // 8)
+    return os.urandom(strength // 8).hex()
 
 
 def generate_mnemonic(entropy):
+    entropy_bin = binascii.unhexlify(entropy)
     DELIMITER = " "
 
-    hex_hash = hashlib.sha256(entropy).hexdigest()
+    hex_hash = hashlib.sha256(entropy_bin).hexdigest()
 
     bin_hash = bin(
-        int.from_bytes(entropy, byteorder="big")
-    )[2:].zfill(len(entropy) * 8)
-    checksum = bin(int(hex_hash, 16))[2:].zfill(256)[:len(entropy) * 8 // 32]
+        int.from_bytes(entropy_bin, byteorder="big")
+    )[2:].zfill(len(entropy_bin) * 8)
+    checksum = bin(int(hex_hash, 16))[2:].zfill(256)[
+        :len(entropy_bin) * 8 // 32]
 
     b = bin_hash + checksum
 
@@ -46,7 +47,7 @@ def generate_mnemonic(entropy):
     ])
 
 
-def check(mnemonic):
+def validate_mnemonic(mnemonic):
     try:
         words = mnemonic.split(" ")
 
@@ -115,33 +116,28 @@ def recover_entropy(mnemonic):
     for i in range(checksum_length):
         assert b[entropy_length + i] == bb[i]
 
-    return bytes(entropy)
+    return bytes(entropy).hex()
 
 
-def main():
-    entropy = gen_entropy(strength=128)
+def test():
+    entropy = "b0e8160f51929bf718a3f28ddc15cf27"
+    expected_addr_legacy = "15VLC7awxvzWR44vX5ruDGGUuNfzosJBct"
+    expected_addr_segwit = "bc1qlmak5sel2z9ugaxexcn538dkhsagnyvp30fzf0"
+
     mnemonic = generate_mnemonic(entropy)
     seed = mnemonics2seed(mnemonic)
+    hdkey = HDKey.from_seed(seed)
+    addr_legacy = HDKey.get_address(hdkey=hdkey, witness_type="legacy")
+    addr_segwit = HDKey.get_address(hdkey=hdkey, witness_type="segwit")
     recovered_entropy = recover_entropy(mnemonic)
 
-    assert check(mnemonic)
+    assert validate_mnemonic(mnemonic)
     assert entropy == recovered_entropy
-
-    print("mnemonic:\t", mnemonic)
-    print("seed:\t", seed)
-    print("entropy:\t", entropy)
-    print("recovered:\t", recovered_entropy)
-
-    to_clipboard(mnemonic)
+    assert addr_legacy == expected_addr_legacy
+    assert addr_segwit == expected_addr_segwit
 
 
-if __name__ == "__main__":
-    main()
-
-# * final check on metamask
-# * add diff btc/eth
-# * check actual balance wallet sometimes
-# * seed to addr
+# * add network btc/eth
 
 # Test
 #  * https://allprivatekeys.com/mnemonic-code-converter

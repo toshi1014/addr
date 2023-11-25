@@ -4,22 +4,32 @@ from bitcoinlib.wallets import Wallet, wallet_delete_if_exists
 from tqdm import tqdm
 import bip39
 import utils
+import handle_addr_list
 
 
-def get_balance(mnemonic):
-    wallet_name = "Wallet1"
-    # mnemonic = "real crater virtual there brush blush unable bone pelican hotel since elite"
-
+def init_wallet(mnemonic, witness_type, wallet_name="Wallet1"):
     if wallet_delete_if_exists(wallet_name):
         ...
 
-    wallet = Wallet.create(
+    return Wallet.create(
         name=wallet_name,
         keys=mnemonic,
         network="bitcoin",
+        witness_type=witness_type,
     )
 
-    return wallet.balance()
+
+def get_balance_network(mnemonic, witness_type):
+    return init_wallet(
+        mnemonic=mnemonic,
+        witness_type=witness_type,
+    ).balance()
+
+
+def get_balance_local(mnemonic, witness_type):
+    addr = init_wallet(mnemonic, witness_type).get_key().address
+    return False
+    return handle_addr_list.find(addr)
 
 
 def tmp_gen_entropy(i, strength, lim):
@@ -41,6 +51,9 @@ def gen(lim):
 
 @utils.with_timer(template="Delta: {time} (s)")
 def run(strength):
+    witness_type = "segwit"
+    func_get_balance = get_balance_local
+
     assert strength in bip39.SUPPORTED_STRENGTH
     lim = 2 ** strength
 
@@ -54,7 +67,7 @@ def run(strength):
         mnemonic = bip39.generate_mnemonic(entropy)
         assert bip39.check(mnemonic)
 
-        if get_balance(mnemonic):
+        if func_get_balance(mnemonic, witness_type) > 0:
             print(f"{i}: {mnemonic}")
             utils.notify(mnemonic)
             with open("found.txt", mode="a", encoding="utf-8") as f:
@@ -62,6 +75,8 @@ def run(strength):
 
 
 run(strength=128)
+
+# * check actual balance wallet sometimes
 
 
 # 2048

@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 import requests
 
 
@@ -37,3 +38,7 @@ def notify(msg):
         )
     except Exception:
         ...
+
+
+def to_clipboard(string):
+    os.system(f"echo {str(string)} | xsel --clipboard --input")
