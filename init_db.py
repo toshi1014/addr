@@ -1,20 +1,18 @@
 import src
 
 
-# SRC_FILENAME = "addr_list.short.tsv"
-SRC_FILENAME = "addr_list.tsv"
-
-PING_DATA = {
-    "entropy":  "b0e8160f51929bf718a3f28ddc15cf27",
-    "addr": "15VLC7awxvzWR44vX5ruDGGUuNfzosJBct",
-}
+config = src.utils.read_config()
 
 
 def init_db():
-    cls_db = src.db_handlers.DBSqlite
-    # cls_db = src.db_handlers.DBPostgres
+    if config["DB_TYPE"] == "sqlite":
+        cls_db = src.db_handlers.DBSqlite
+    elif config["DB_TYPE"] == "postgres":
+        cls_db = src.db_handlers.DBPostgres
+    else:
+        raise ValueError(config["DB_TYPE"])
 
-    cls_db.setup(SRC_FILENAME, PING_DATA)
+    cls_db.setup(config["SRC_FILENAME"], config["PING_DATA"])
 
 
 if __name__ == "__main__":

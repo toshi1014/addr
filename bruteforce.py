@@ -3,7 +3,9 @@ import random
 from bitcoinlib.wallets import Wallet, wallet_delete_if_exists
 from tqdm import tqdm
 import src
-import init_db
+
+
+config = src.utils.read_config()
 
 
 def init_wallet_obj(mnemonic, witness_type, wallet_name="Wallet1"):
@@ -24,12 +26,16 @@ def has_balance_network(mnemonic, _):
     return (b1 + b2) > 0
 
 
-def has_balance_local(mnemonic, db):
+def mnemonic2addr(mnemonic):
     seed = src.bip39.mnemonics2seed(mnemonic)
     hdkey = src.HDKey.from_seed(seed)
     addr_legacy = src.HDKey.get_address(hdkey=hdkey, witness_type="legacy")
     addr_segwit = src.HDKey.get_address(hdkey=hdkey, witness_type="segwit")
+    return addr_legacy, addr_segwit
 
+
+def has_balance_local(mnemonic, db):
+    addr_legacy, addr_segwit = mnemonic2addr(mnemonic)
     return db.find(addr_legacy) or db.find(addr_segwit)
 
 
@@ -52,9 +58,10 @@ def gen(lim):
 
 def ping(func_has_balance, db):
     mnemonic = src.bip39.generate_mnemonic(
-        init_db.PING_DATA["entropy"]
+        config["PING_DATA"]["entropy"]
     )
-    assert func_has_balance(mnemonic, db)
+    addr_legacy, addr_segwit = mnemonic2addr(mnemonic)
+    assert db.find(addr_legacy) and db.find(addr_segwit)
 
 
 def found(mnemonic):
@@ -76,7 +83,7 @@ def run(strength, db):
     lim = 2 ** strength
     rng = gen(lim)
 
-    for i in tqdm(rng, total=lim):
+    for i in tqdm(rng, total=lim/2**100):   # small total for show
         entropy = tmp_gen_entropy(i, strength, lim)
         mnemonic = src.bip39.generate_mnemonic(entropy)
         assert src.bip39.validate_mnemonic(mnemonic)
@@ -91,9 +98,14 @@ def run(strength, db):
 
 
 def main():
-    # db = src.db_handlers.DBSqlite()
-    db = src.db_handlers.DBPostgres()
+    if config["DB_TYPE"] == "sqlite":
+        db = src.db_handlers.DBSqlite()
+    elif config["DB_TYPE"] == "postgres":
+        db = src.db_handlers.DBPostgres()
+    else:
+        raise ValueError(config["DB_TYPE"])
 
+    db.prepare_index()
     run(strength=128, db=db)
 
 

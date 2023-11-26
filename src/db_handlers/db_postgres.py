@@ -19,11 +19,12 @@ class DBPostgres(db_base.DB):
         self.cur = self.conn.cursor()
 
     def clean_table(self):
-        sql = f"DROP TABLE IF EXISTS {DBPostgres.tbl_name};"
-        self.cur.execute(sql)
-        self.conn.commit()
-        self.conn.close()
-        print("cleaned\n")
+        self.drop_table(db_base.DB.tbl_legacy)
+        self.drop_table(db_base.DB.tbl_segwit)
+
+        for i in range(db_base.DB.dividend_lengh + 1):
+            self.drop_table(db_base.DB.tbl_legacy + str(i))
+            self.drop_table(db_base.DB.tbl_segwit + str(i))
 
     @classmethod
     def setup(cls, src_filename, ping_data):
@@ -37,6 +38,8 @@ class DBPostgres(db_base.DB):
 
 
 """
+init postgres
+
 sudo -u postgres psql
 ALTER ROLE postgres WITH password "password";
 CREATE DATABASE mydb;

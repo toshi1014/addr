@@ -1,3 +1,12 @@
 {
+    "SRC_FILENAME!": "addr_list.short.tsv",
+    "DB_TYPE!": "sqlite",
+    "SRC_FILENAME": "addr_list.tsv",
+    "DB_TYPE": "postgres",
+    "PING_DATA": {
+        "entropy": "b0e8160f51929bf718a3f28ddc15cf27",
+        "addr_legacy": "15VLC7awxvzWR44vX5ruDGGUuNfzosJBct",
+        "addr_segwit": "bc1qlmak5sel2z9ugaxexcn538dkhsagnyvp30fzf0"
+    },
     "LINE_TOKEN": "9njgywvEbU1nc0lfu1M6uP89NNNWXZ7Ldyk123HsGeH"
 }
