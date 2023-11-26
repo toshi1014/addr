@@ -22,7 +22,7 @@ def wif2addr(wif, testnet):
 def mnemonic2addr(mnemonic):
     seed = src.bip39.mnemonics2seed(mnemonic)
     hdkey = src.HDKey.from_seed(seed)
-    addr = src.HDKey.get_address(hdkey)
+    addr = src.HDKey.get_address(hdkey, witness_type="segwit")
 
     assert src.bip39.validate_mnemonic(mnemonic)
 
@@ -42,7 +42,6 @@ def main():
     # prikey2wif(prikey, testnet, compressed)
     mnemonic2addr(mnemonic)
     # wif2addr(wif, testnet)
-
 
 
 if __name__ == "__main__":
