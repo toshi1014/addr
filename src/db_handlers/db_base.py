@@ -10,7 +10,7 @@ class DB:
     tbl_legacy = "tbl_legacy"
     tbl_segwit = "tbl_segwit"
     col_addr = "address"
-    dividend_lengh = 100
+    dividend_length = 1000
 
     def __init__(self):
         self.conn = None
@@ -27,9 +27,14 @@ class DB:
             "method": "multi",
             "chunksize": 10*4,
         }
-        cls.insert_all(src_filename, ping_data, params_to_sql)
-        cls.divide_tbl(db, cls.tbl_legacy, params_to_sql)
-        cls.divide_tbl(db, cls.tbl_segwit, params_to_sql)
+
+        size_legacy, size_segwit = cls.insert_all(
+            src_filename, ping_data, params_to_sql
+        )
+        # size_legacy, size_segwit = 22961294,16410460
+
+        cls.divide_tbl(db, cls.tbl_legacy, size_legacy, params_to_sql)
+        cls.divide_tbl(db, cls.tbl_segwit, size_segwit, params_to_sql)
         print("\nSetup complete")
 
     @classmethod
@@ -53,14 +58,24 @@ class DB:
             chunksize=CHUNKSIZE,
         )
 
-        sum_records = 0
+        sum_size_legacy = 0
+        sum_size_segwit = 0
         for df in tqdm(reader, total=lines // CHUNKSIZE):
-            size = cls.insert_with_filter(df, params_to_sql)
-            sum_records += size
+            size_legacy, size_segwit = cls.insert_with_filter(
+                df, params_to_sql)
+            sum_size_legacy += size_legacy
+            sum_size_segwit += size_segwit
 
-        print("\nStats")
-        print(f"  size:\t{sum_records}/{lines} (= {sum_records/lines})")
-        print(f"  hit:\t{sum_records/(2**128)}\n")
+        sum_records = sum_size_legacy + sum_size_segwit
+        print(
+            "\nStats\n"
+            f"  size:\t{sum_records}/{lines} (= {sum_records/lines})\n"
+            f"  hit:\t{sum_records/(2**128)}\n"
+            f"  legacy:segwit = {sum_size_legacy}:{sum_size_segwit}"
+            f" (= {str(sum_size_legacy/sum_records)[:5]}:{str(sum_size_segwit/sum_records)[:5]})\n"
+        )
+
+        return sum_size_legacy, sum_size_segwit
 
     @classmethod
     def insert(cls, df, tbl_name, params_to_sql):
@@ -85,47 +100,43 @@ class DB:
             tbl_name=cls.tbl_segwit,
             params_to_sql=params_to_sql,
         )
-        return len(df_legacy) + len(df_segwit)
+        return len(df_legacy), len(df_segwit)
 
     @classmethod
-    def divide_tbl(cls, db, tbl_name_all, params_to_sql):
+    def format_tbl_name(cls, base, idx):
+        return f"{base}{str(idx)}"
+
+    @classmethod
+    def divide_tbl(cls, db, tbl_name_all, size, params_to_sql):
         cur = db.conn.cursor()
         print(f"Dividing {tbl_name_all}...")
-        cur.execute(f"SELECT * FROM {tbl_name_all} ORDER BY {cls.col_addr};")
-        row_all = cur.fetchall()
-        size_per_tbl = len(row_all) // cls.dividend_lengh
+        cur.execute(
+            f"SELECT * FROM {tbl_name_all} ORDER BY {cls.col_addr}{cls.sql_order};")
+        size_per_tbl = size // cls.dividend_length
 
         tbl_index = []
-        for i in tqdm(range(cls.dividend_lengh)):
-            rows = row_all[i*size_per_tbl:(i+1)*size_per_tbl]
+        for i in tqdm(range(cls.dividend_length + 1)):
+            rows = cur.fetchmany(size_per_tbl)
             df = pd.DataFrame({"address": [row[0] for row in rows]})
             cls.insert(
                 df=df,
-                tbl_name=tbl_name_all + str(i),
+                tbl_name=cls.format_tbl_name(tbl_name_all, i),
                 params_to_sql=params_to_sql,
-
             )
 
             # memo the end as index
             tbl_index.append(df.iloc[len(df)-1]["address"])
 
-        last_rows = row_all[(i+1)*size_per_tbl:]
-        df = pd.DataFrame({"address": [row[0] for row in last_rows]})
-        cls.insert(
-            df=df,
-            tbl_name=tbl_name_all + str(i),
-            params_to_sql=params_to_sql,
-
-        )
+        assert len(cur.fetchall()) == 0
 
         # save indices
         with open(f"{tbl_name_all}.json.tmp", "w", encoding="utf-8") as f:
             f.write(json.dumps(tbl_index))
 
     def prepare_index(self):
-        with open(f"tbl_legacy.json.tmp", "r", encoding="utf-8") as f:
+        with open("tbl_legacy.json.tmp", "r", encoding="utf-8") as f:
             self.idx_tbl_legacy = json.loads(f.read())
-        with open(f"tbl_segwit.json.tmp", "r", encoding="utf-8") as f:
+        with open("tbl_segwit.json.tmp", "r", encoding="utf-8") as f:
             self.idx_tbl_segwit = json.loads(f.read())
 
     def get_tbl_name(self, addr):
@@ -134,9 +145,9 @@ class DB:
 
         for i, idx in enumerate(idx_tbl_xxx):
             if idx > addr:
-                return tbl_name + str(i)
+                return DB.format_tbl_name(tbl_name, i)
 
-        return tbl_name + str(i+1)
+        return DB.format_tbl_name(tbl_name, i + 1)
 
     def search(self, addr):
         self.cur.execute(

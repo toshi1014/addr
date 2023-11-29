@@ -13,6 +13,8 @@ POSTGRES_CONFIG = {
 
 
 class DBPostgres(db_base.DB):
+    sql_order = "::bytea"
+
     def __init__(self):
         super().__init__()
         self.conn = psycopg2.connect(**POSTGRES_CONFIG)
@@ -22,9 +24,13 @@ class DBPostgres(db_base.DB):
         self.drop_table(db_base.DB.tbl_legacy)
         self.drop_table(db_base.DB.tbl_segwit)
 
-        for i in range(db_base.DB.dividend_lengh + 1):
-            self.drop_table(db_base.DB.tbl_legacy + str(i))
-            self.drop_table(db_base.DB.tbl_segwit + str(i))
+        for i in range(db_base.DB.dividend_length + 1):
+            self.drop_table(
+                db_base.DB.format_tbl_name(db_base.DB.tbl_legacy, i)
+            )
+            self.drop_table(
+                db_base.DB.format_tbl_name(db_base.DB.tbl_segwit, i)
+            )
 
     @classmethod
     def setup(cls, src_filename, ping_data):
@@ -43,4 +49,7 @@ init postgres
 sudo -u postgres psql
 ALTER ROLE postgres WITH password "password";
 CREATE DATABASE mydb;
+
+\c mydb
+\dt
 """

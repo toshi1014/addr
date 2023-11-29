@@ -7,6 +7,8 @@ DB_FILENAME = "out.db"
 
 
 class DBSqlite(db_base.DB):
+    sql_order = ""
+
     def __init__(self):
         super().__init__()
         self.conn = sqlite3.connect(DB_FILENAME)

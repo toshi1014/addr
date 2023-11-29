@@ -92,7 +92,7 @@ def run(strength, db):
             print(f"{i}: {mnemonic}")
             found(mnemonic)
 
-        if i % 100 == 0:
+        if i % 10000 == 0:
             ping(func_has_balance, db)
             print("ping", i)
 

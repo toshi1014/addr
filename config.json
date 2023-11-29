@@ -1,7 +1,7 @@
 {
     "SRC_FILENAME!": "addr_list.short.tsv",
-    "DB_TYPE!": "sqlite",
     "SRC_FILENAME": "addr_list.tsv",
+    "DB_TYPE!": "sqlite",
     "DB_TYPE": "postgres",
     "PING_DATA": {
         "entropy": "b0e8160f51929bf718a3f28ddc15cf27",
