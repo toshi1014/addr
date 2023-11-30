@@ -1,30 +1,30 @@
-import src
+import pyattacker
 
 
 def prikey2wif(prikey, testnet, compressed):
-    pubkey = src.tools.prikey2pubkey(prikey)
-    addr = src.tools.pubkey2addr(pubkey, testnet)
-    wif = src.tools.prikey2wif(prikey, testnet, compressed)
+    pubkey = pyattacker.tools.prikey2pubkey(prikey)
+    addr = pyattacker.tools.pubkey2addr(pubkey, testnet)
+    wif = pyattacker.tools.prikey2wif(prikey, testnet, compressed)
 
     print(
         f"private key:\t{prikey}\npublic key:\t{pubkey}\naddr:\t{addr}\nwif:\t{wif}\n")
 
 
 def wif2addr(wif, testnet):
-    prikey = src.tools.wif2prikey(wif)
-    pubkey = src.tools.prikey2pubkey(prikey)
-    addr = src.tools.pubkey2addr(pubkey, testnet)
+    prikey = pyattacker.tools.wif2prikey(wif)
+    pubkey = pyattacker.tools.prikey2pubkey(prikey)
+    addr = pyattacker.tools.pubkey2addr(pubkey, testnet)
 
     print(
         f"private key:\t{prikey}\npublic key:\t{pubkey}\naddr:\t{addr}\nwif:\t{wif}\n")
 
 
 def mnemonic2addr(mnemonic):
-    seed = src.bip39.mnemonics2seed(mnemonic)
-    hdkey = src.HDKey.from_seed(seed)
-    addr = src.HDKey.get_address(hdkey, witness_type="segwit")
+    seed = pyattacker.bip39.mnemonics2seed(mnemonic)
+    hdkey = pyattacker.HDKey.from_seed(seed)
+    addr = pyattacker.HDKey.get_address(hdkey, witness_type="segwit")
 
-    assert src.bip39.validate_mnemonic(mnemonic)
+    assert pyattacker.bip39.validate_mnemonic(mnemonic)
 
     print("mnemonic:\t", mnemonic)
     print("seed:\t", seed)

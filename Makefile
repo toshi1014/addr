@@ -2,10 +2,10 @@ all:
 	@echo all
 
 init_db:
-	@python3 init_db.py
+	@python3 src/init_db.py
 
 run:
-	@python3 bruteforce.py
+	@python3 src/bruteforce.py
 
 clean:
 	@echo clean

@@ -155,7 +155,7 @@ def is_valid_wif(wif):
 def test():
     import json
 
-    with open("cases.json", "r", encoding="utf-8") as f:
+    with open("test/cases.json", "r", encoding="utf-8") as f:
         cases = json.loads(f.read())
 
     for case in cases:
