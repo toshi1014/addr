@@ -11,13 +11,14 @@ from . import encoding_tools
 
 
 SUPPORTED_WITNESS_TYPES = {"legacy", "segwit"}
+SUPPORTED_NETWORKS = {"btc", "eth"}
 
 
 def hash160(string):
     return ripemd.ripemd160.ripemd160(hashlib.sha256(string).digest())
 
 
-class HDKey:
+class HDKeyBTC:
     def __init__(
         self,
         key=None,
@@ -90,13 +91,13 @@ class HDKey:
         else:
             data = hdkey.public_byte + index.to_bytes(4, "big")
 
-        key, chain = HDKey.key_derivation(data, hdkey.chain)
+        key, chain = HDKeyBTC.key_derivation(data, hdkey.chain)
         key = int.from_bytes(key, "big")
 
         newkey = (key + hdkey.secret) % bitcoinlib.config.secp256k1.secp256k1_n
         newkey = int.to_bytes(newkey, 32, "big")
 
-        return HDKey(
+        return HDKeyBTC(
             key=newkey,
             chain=chain,
             depth=hdkey.depth + 1,
@@ -157,12 +158,21 @@ class HDKey:
         return npath
 
     @classmethod
-    def get_address(cls, hdkey, witness_type):
+    def seed2address(cls, seed, witness_type, network="btc"):
         assert witness_type in SUPPORTED_WITNESS_TYPES
+        assert network in SUPPORTED_NETWORKS
+
+        hdkey = cls.from_seed(seed)
 
         path = [0, 0]
-        path_template = ["m", "purpose'", "coin_type'",
-                         "account'", "change", "address_index"]
+        path_template = [
+            "m",
+            "purpose'",
+            "coin_type'",
+            "account'",
+            "change",
+            "address_index",
+        ]
         address_index = 0
         network = "bitcoin"
 
@@ -191,7 +201,7 @@ class HDKey:
 
         newpath = "m"
         for lvl in fullpath[1:]:
-            hdkey = HDKey.subkey_for_path(
+            hdkey = HDKeyBTC.subkey_for_path(
                 hdkey=hdkey,
                 path=lvl,
                 network=network,

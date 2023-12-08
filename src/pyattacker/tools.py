@@ -59,7 +59,7 @@ def pubkey2addr(public_key, testnet):
     # 9. addr
     addr = base58.b58encode(binascii.unhexlify(addr25))
 
-    return addr.decode()
+    return addr
 
 
 def prikey2wif(private_key, testnet, compressed):
@@ -87,7 +87,7 @@ def prikey2wif(private_key, testnet, compressed):
     # 7. wif
     wif = base58.b58encode(binascii.unhexlify(with_checksum))
 
-    return wif.decode()
+    return wif
 
 
 def wif2prikey(wif):

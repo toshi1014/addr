@@ -26,17 +26,21 @@ def has_balance_network(mnemonic, _):
     return (b1 + b2) > 0
 
 
-def mnemonic2addr(mnemonic):
+def has_balance_local(mnemonic, db, is_all=False):
     seed = pyattacker.bip39.mnemonics2seed(mnemonic)
-    hdkey = pyattacker.HDKey.from_seed(seed)
-    addr_legacy = pyattacker.HDKey.get_address(hdkey=hdkey, witness_type="legacy")
-    addr_segwit = pyattacker.HDKey.get_address(hdkey=hdkey, witness_type="segwit")
-    return addr_legacy, addr_segwit
 
+    addr_legacy = pyattacker.HDKeyBTC.seed2address(
+        seed=seed, witness_type="legacy", network="btc"
+    )
+    addr_segwit = pyattacker.HDKeyBTC.seed2address(
+        seed=seed, witness_type="segwit", network="btc"
+    )
+    addr_eth = pyattacker.HDKeyETH.seed2address(seed=seed)
 
-def has_balance_local(mnemonic, db):
-    addr_legacy, addr_segwit = mnemonic2addr(mnemonic)
-    return db.find(addr_legacy) or db.find(addr_segwit)
+    if is_all:
+        return db.find(addr_legacy) & db.find(addr_segwit) & db.find(addr_eth)
+    else:
+        return db.find(addr_legacy) or db.find(addr_segwit) or db.find(addr_eth)
 
 
 def tmp_gen_entropy(i, strength, lim):
@@ -60,8 +64,7 @@ def ping(func_has_balance, db):
     mnemonic = pyattacker.bip39.generate_mnemonic(
         config["PING_DATA"]["entropy"]
     )
-    addr_legacy, addr_segwit = mnemonic2addr(mnemonic)
-    assert db.find(addr_legacy) and db.find(addr_segwit)
+    assert func_has_balance(mnemonic, db, is_all=True)
 
 
 def found(mnemonic):

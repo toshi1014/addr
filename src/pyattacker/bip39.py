@@ -2,7 +2,8 @@ import binascii
 import hashlib
 import itertools
 import os
-from .hdkey import HDKey
+from .hdkey_btc import HDKeyBTC
+from .hdkey_eth import HDKeyETH
 
 
 # ref. https://en.bitcoin.it/wiki/BIP_0039
@@ -123,21 +124,21 @@ def test():
     entropy = "b0e8160f51929bf718a3f28ddc15cf27"
     expected_addr_legacy = "15VLC7awxvzWR44vX5ruDGGUuNfzosJBct"
     expected_addr_segwit = "bc1qlmak5sel2z9ugaxexcn538dkhsagnyvp30fzf0"
+    expected_addr_eth = "0x1ca21071b051df5901614be2a085cc0d655c7c6d"
 
     mnemonic = generate_mnemonic(entropy)
     seed = mnemonics2seed(mnemonic)
-    hdkey = HDKey.from_seed(seed)
-    addr_legacy = HDKey.get_address(hdkey=hdkey, witness_type="legacy")
-    addr_segwit = HDKey.get_address(hdkey=hdkey, witness_type="segwit")
+    addr_legacy = HDKeyBTC.seed2address(seed=seed, witness_type="legacy")
+    addr_segwit = HDKeyBTC.seed2address(seed=seed, witness_type="segwit")
+    addr_eth = HDKeyETH.seed2address(seed=seed)
     recovered_entropy = recover_entropy(mnemonic)
 
     assert validate_mnemonic(mnemonic)
     assert entropy == recovered_entropy
     assert addr_legacy == expected_addr_legacy
     assert addr_segwit == expected_addr_segwit
+    assert addr_eth == expected_addr_eth
 
-
-# * add network btc/eth
 
 # Test
 #  * https://allprivatekeys.com/mnemonic-code-converter
