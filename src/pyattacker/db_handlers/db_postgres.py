@@ -33,14 +33,15 @@ class DBPostgres(db_base.DB):
             )
 
     @classmethod
-    def setup(cls, src_filename, ping_data):
+    def setup(cls, filename_btc, filename_eth, ping_data):
         engine = create_engine(
             "postgresql://{user}:{password}@{host}:{port}/{database}".format(
                 **POSTGRES_CONFIG)
         )
 
         cls().clean_table()
-        super().setup(src_filename, ping_data, engine)
+        super().setup_btc(filename_btc, ping_data, engine)
+        super().setup_eth(filename_eth, ping_data, engine)
 
 
 """

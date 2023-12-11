@@ -15,11 +15,14 @@ class DBSqlite(db_base.DB):
         self.cur = self.conn.cursor()
 
     @classmethod
-    def setup(cls, src_filename, ping_data):
+    def setup(cls, filename_btc, filename_eth, ping_data):
         if os.path.exists(DB_FILENAME):
             os.remove(DB_FILENAME)
 
-        super().setup(src_filename, ping_data)
+        super().setup_btc(filename_btc, ping_data)
+        super().setup_eth(filename_eth, ping_data)
+
+        print("\nSetup complete")
 
 
 # https://yuyuublog.com/executemany/

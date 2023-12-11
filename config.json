@@ -1,12 +1,14 @@
 {
-    "SRC_FILENAME!": "addr_list.short.tsv",
-    "SRC_FILENAME": "addr_list.tsv",
+    "SRC_FILENAME_BTC!": "addr_list.short.tsv",
+    "SRC_FILENAME_BTC": "addr_list.tsv",
+    "SRC_FILENAME_ETH": "addr_list.eth.csv",
     "DB_TYPE": "sqlite",
     "DB_TYPE!": "postgres",
     "PING_DATA": {
         "entropy": "b0e8160f51929bf718a3f28ddc15cf27",
         "addr_legacy": "15VLC7awxvzWR44vX5ruDGGUuNfzosJBct",
-        "addr_segwit": "bc1qlmak5sel2z9ugaxexcn538dkhsagnyvp30fzf0"
+        "addr_segwit": "bc1qlmak5sel2z9ugaxexcn538dkhsagnyvp30fzf0",
+        "addr_eth": "0x1ca21071b051df5901614be2a085cc0d655c7c6d"
     },
     "LINE_TOKEN": "9njgywvEbU1nc0lfu1M6uP89NNNWXZ7Ldyk123HsGeH"
 }

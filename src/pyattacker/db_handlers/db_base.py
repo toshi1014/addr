@@ -9,6 +9,7 @@ CHUNKSIZE = 10**5
 class DB:
     tbl_legacy = "tbl_legacy"
     tbl_segwit = "tbl_segwit"
+    tbl_eth = "tbl_eth"
     col_addr = "address"
     dividend_length = 1000
 
@@ -18,7 +19,7 @@ class DB:
         self.col_addr = DB.col_addr
 
     @classmethod
-    def setup(cls, src_filename, ping_data, engine=None):
+    def setup_btc(cls, src_filename, ping_data, engine=None):
         db = cls()
         params_to_sql = {
             "con": engine if engine else db.conn,
@@ -35,7 +36,35 @@ class DB:
 
         cls.divide_tbl(db, cls.tbl_legacy, size_legacy, params_to_sql)
         cls.divide_tbl(db, cls.tbl_segwit, size_segwit, params_to_sql)
-        print("\nSetup complete")
+
+        print("\nBTC setup complete")
+
+    @classmethod
+    def setup_eth(cls, src_filename, ping_data, engine=None):
+        db = cls()
+        params_to_sql = {
+            "con": engine if engine else db.conn,
+            "if_exists": "append",
+            "index": False,
+            "method": "multi",
+            "chunksize": 10*4,
+        }
+
+        df = pd.read_csv(src_filename)
+        df_ping = pd.DataFrame({
+            "address": [ping_data["addr_eth"]]
+        })
+        df = pd.concat([df[["address"]], df_ping], axis=0)
+
+        cls.insert(
+            df=df,
+            tbl_name=cls.tbl_eth,
+            params_to_sql=params_to_sql,
+        )
+
+        cls.divide_tbl(db, cls.tbl_eth, len(df), params_to_sql)
+
+        print("\nETH setup complete")
 
     @classmethod
     def insert_all(cls, src_filename, ping_data, params_to_sql):
@@ -138,16 +167,22 @@ class DB:
             self.idx_tbl_legacy = json.loads(f.read())
         with open("tbl_segwit.json.tmp", "r", encoding="utf-8") as f:
             self.idx_tbl_segwit = json.loads(f.read())
+        with open("tbl_eth.json.tmp", "r", encoding="utf-8") as f:
+            self.idx_tbl_eth = json.loads(f.read())
 
     def get_tbl_name(self, addr):
-        idx_tbl_xxx, tbl_name = (self.idx_tbl_legacy, DB.tbl_legacy) \
-            if addr[0] == "1" else (self.idx_tbl_segwit, DB.tbl_segwit)
+        if addr[:2] == "0x":
+            idx_tbl_xxx, tbl_name = self.idx_tbl_eth, DB.tbl_eth
+        elif addr[0] == "1":
+            idx_tbl_xxx, tbl_name = self.idx_tbl_legacy, DB.tbl_legacy
+        else:
+            idx_tbl_xxx, tbl_name = self.idx_tbl_segwit, DB.tbl_segwit
 
         for i, idx in enumerate(idx_tbl_xxx):
             if idx > addr:
                 return DB.format_tbl_name(tbl_name, i)
 
-        return DB.format_tbl_name(tbl_name, i + 1)
+        return DB.format_tbl_name(tbl_name, i)
 
     def search(self, addr):
         self.cur.execute(

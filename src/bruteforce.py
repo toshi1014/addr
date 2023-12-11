@@ -20,13 +20,7 @@ def init_wallet_obj(mnemonic, witness_type, wallet_name="Wallet1"):
     )
 
 
-def has_balance_network(mnemonic, _):
-    b1 = init_wallet_obj(mnemonic, "legacy").balance()
-    b2 = init_wallet_obj(mnemonic, "segwit").balance()
-    return (b1 + b2) > 0
-
-
-def has_balance_local(mnemonic, db, is_all=False):
+def has_balance_all(mnemonic, db, is_all=False):
     seed = pyattacker.bip39.mnemonics2seed(mnemonic)
 
     addr_legacy = pyattacker.HDKeyBTC.seed2address(
@@ -41,6 +35,12 @@ def has_balance_local(mnemonic, db, is_all=False):
         return db.find(addr_legacy) & db.find(addr_segwit) & db.find(addr_eth)
     else:
         return db.find(addr_legacy) or db.find(addr_segwit) or db.find(addr_eth)
+
+
+def has_balance_eth(mnemonic, db, is_all=False):
+    seed = pyattacker.bip39.mnemonics2seed(mnemonic)
+    addr_eth = pyattacker.HDKeyETH.seed2address(seed=seed)
+    return db.find(addr_eth)
 
 
 def tmp_gen_entropy(i, strength, lim):
@@ -77,8 +77,8 @@ def found(mnemonic):
 def run(strength, db):
     assert strength in pyattacker.bip39.SUPPORTED_STRENGTH
 
-    # func_has_balance = has_balance_network
-    func_has_balance = has_balance_local
+    # func_has_balance = has_balance_all
+    func_has_balance = has_balance_eth
 
     # chunk_bits = 6
     # lim = 2**(11 * (12 - chunk_bits))
@@ -89,13 +89,12 @@ def run(strength, db):
     for i in tqdm(rng, total=lim/2**100):   # small total for show
         entropy = tmp_gen_entropy(i, strength, lim)
         mnemonic = pyattacker.bip39.generate_mnemonic(entropy)
-        assert pyattacker.bip39.validate_mnemonic(mnemonic)
 
         if func_has_balance(mnemonic, db):
             print(f"{i}: {mnemonic}")
             found(mnemonic)
 
-        if i % 10000 == 0:
+        if i % 100000 == 0:
             ping(func_has_balance, db)
             print("ping", i)
 
