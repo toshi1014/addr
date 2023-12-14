@@ -2,10 +2,14 @@ import os
 import random
 from bitcoinlib.wallets import Wallet, wallet_delete_if_exists
 from tqdm import tqdm
-import pyattacker
+import bip39
+import db_handlers
+from hdkey_btc import HDKeyBTC
+from hdkey_eth import HDKeyETH
+import utils
 
 
-config = pyattacker.utils.read_config()
+config = utils.read_config()
 
 
 def init_wallet_obj(mnemonic, witness_type, wallet_name="Wallet1"):
@@ -21,15 +25,15 @@ def init_wallet_obj(mnemonic, witness_type, wallet_name="Wallet1"):
 
 
 def has_balance_all(mnemonic, db, is_all=False):
-    seed = pyattacker.bip39.mnemonics2seed(mnemonic)
+    seed = bip39.mnemonics2seed(mnemonic)
 
-    addr_legacy = pyattacker.HDKeyBTC.seed2address(
+    addr_legacy = HDKeyBTC.seed2address(
         seed=seed, witness_type="legacy", network="btc"
     )
-    addr_segwit = pyattacker.HDKeyBTC.seed2address(
+    addr_segwit = HDKeyBTC.seed2address(
         seed=seed, witness_type="segwit", network="btc"
     )
-    addr_eth = pyattacker.HDKeyETH.seed2address(seed=seed)
+    addr_eth = HDKeyETH.seed2address(seed=seed)
 
     if is_all:
         return db.find(addr_legacy) & db.find(addr_segwit) & db.find(addr_eth)
@@ -38,8 +42,8 @@ def has_balance_all(mnemonic, db, is_all=False):
 
 
 def has_balance_eth(mnemonic, db, is_all=False):
-    seed = pyattacker.bip39.mnemonics2seed(mnemonic)
-    addr_eth = pyattacker.HDKeyETH.seed2address(seed=seed)
+    seed = bip39.mnemonics2seed(mnemonic)
+    addr_eth = HDKeyETH.seed2address(seed=seed)
     return db.find(addr_eth)
 
 
@@ -61,21 +65,21 @@ def gen(lim):
 
 
 def ping(func_has_balance, db):
-    mnemonic = pyattacker.bip39.generate_mnemonic(
+    mnemonic = bip39.generate_mnemonic(
         config["PING_DATA"]["entropy"]
     )
     assert func_has_balance(mnemonic, db, is_all=True)
 
 
 def found(mnemonic):
-    pyattacker.utils.notify(mnemonic)
+    utils.notify(mnemonic)
     with open("found.txt", mode="a", encoding="utf-8") as f:
         f.write(mnemonic + "\n")
 
 
-@pyattacker.utils.with_timer(template="Delta: {time} (s)")
+@utils.with_timer(template="Delta: {time} (s)")
 def run(strength, db):
-    assert strength in pyattacker.bip39.SUPPORTED_STRENGTH
+    assert strength in bip39.SUPPORTED_STRENGTH
 
     # func_has_balance = has_balance_all
     func_has_balance = has_balance_eth
@@ -88,7 +92,7 @@ def run(strength, db):
 
     for i in tqdm(rng, total=lim/2**100):   # small total for show
         entropy = tmp_gen_entropy(i, strength, lim)
-        mnemonic = pyattacker.bip39.generate_mnemonic(entropy)
+        mnemonic = bip39.generate_mnemonic(entropy)
 
         if func_has_balance(mnemonic, db):
             print(f"{i}: {mnemonic}")
@@ -101,9 +105,9 @@ def run(strength, db):
 
 def main():
     if config["DB_TYPE"] == "sqlite":
-        db = pyattacker.db_handlers.DBSqlite()
+        db = db_handlers.DBSqlite()
     elif config["DB_TYPE"] == "postgres":
-        db = pyattacker.db_handlers.DBPostgres()
+        db = db_handlers.DBPostgres()
     else:
         raise ValueError(config["DB_TYPE"])
 

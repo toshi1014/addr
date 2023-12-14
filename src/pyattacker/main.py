@@ -1,19 +1,22 @@
-import pyattacker
+import tools
+import bip39
+from hdkey_btc import HDKeyBTC
+from hdkey_eth import HDKeyETH
 
 
 def prikey2wif(prikey, testnet, compressed):
-    pubkey = pyattacker.tools.prikey2pubkey(prikey)
-    addr = pyattacker.tools.pubkey2addr(pubkey, testnet)
-    wif = pyattacker.tools.prikey2wif(prikey, testnet, compressed)
+    pubkey = tools.prikey2pubkey(prikey)
+    addr = tools.pubkey2addr(pubkey, testnet)
+    wif = tools.prikey2wif(prikey, testnet, compressed)
 
     print(
         f"private key:\t{prikey}\npublic key:\t{pubkey}\naddr:\t{addr}\nwif:\t{wif}\n")
 
 
 def wif2addr(wif, testnet):
-    prikey = pyattacker.tools.wif2prikey(wif)
-    pubkey = pyattacker.tools.prikey2pubkey(prikey)
-    addr = pyattacker.tools.pubkey2addr(pubkey, testnet)
+    prikey = tools.wif2prikey(wif)
+    pubkey = tools.prikey2pubkey(prikey)
+    addr = tools.pubkey2addr(pubkey, testnet)
 
     print(
         f"private key:\t{prikey}\npublic key:\t{pubkey}\naddr:\t{addr}\nwif:\t{wif}\n")
@@ -21,16 +24,16 @@ def wif2addr(wif, testnet):
 
 def mnemonic2addr(mnemonic, network):
     if network == "btc":
-        cls_hdkey = pyattacker.HDKeyBTC
+        cls_hdkey = HDKeyBTC
     elif network == "eth":
-        cls_hdkey = pyattacker.HDKeyETH
+        cls_hdkey = HDKeyETH
     else:
         raise ValueError("Unknown network", network)
 
-    seed = pyattacker.bip39.mnemonics2seed(mnemonic)
+    seed = bip39.mnemonics2seed(mnemonic)
     addr = cls_hdkey.seed2address(seed, witness_type="segwit")
 
-    assert pyattacker.bip39.validate_mnemonic(mnemonic)
+    assert bip39.validate_mnemonic(mnemonic)
 
     print("mnemonic:", mnemonic)
     print("seed:\t", seed)
@@ -47,8 +50,8 @@ def main():
     # prikey2wif(prikey, testnet, compressed)
     # wif2addr(wif, testnet)
 
-    entropy = pyattacker.bip39.gen_entropy(128)
-    mnemonic = pyattacker.bip39.generate_mnemonic(entropy)
+    entropy = bip39.gen_entropy(128)
+    mnemonic = bip39.generate_mnemonic(entropy)
     mnemonic2addr(mnemonic, "btc")
     mnemonic2addr(mnemonic, "eth")
 

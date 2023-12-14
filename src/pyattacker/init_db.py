@@ -1,14 +1,15 @@
-import pyattacker
+import db_handlers
+import utils
 
 
-config = pyattacker.utils.read_config()
+config = utils.read_config()
 
 
 def init_db():
     if config["DB_TYPE"] == "sqlite":
-        cls_db = pyattacker.db_handlers.DBSqlite
+        cls_db = db_handlers.DBSqlite
     elif config["DB_TYPE"] == "postgres":
-        cls_db = pyattacker.db_handlers.DBPostgres
+        cls_db = db_handlers.DBPostgres
     else:
         raise ValueError(config["DB_TYPE"])
 

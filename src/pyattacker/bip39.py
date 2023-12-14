@@ -2,8 +2,8 @@ import binascii
 import hashlib
 import itertools
 import os
-from .hdkey_btc import HDKeyBTC
-from .hdkey_eth import HDKeyETH
+from hdkey_btc import HDKeyBTC
+from hdkey_eth import HDKeyETH
 
 
 # ref. https://en.bitcoin.it/wiki/BIP_0039

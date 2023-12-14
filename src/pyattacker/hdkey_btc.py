@@ -7,7 +7,7 @@ import bitcoinlib.config.secp256k1
 import fastecdsa
 import ripemd.ripemd160
 
-from . import encoding_tools
+import encoding_tools
 
 
 SUPPORTED_WITNESS_TYPES = {"legacy", "segwit"}
