@@ -5,3 +5,4 @@ found.txt
 addr_list*.tsv
 *.db
 *.tmp
+build
