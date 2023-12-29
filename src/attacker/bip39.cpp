@@ -19,9 +19,17 @@ uint128_t CSPRNG(const uint32_t i) {
 }  // namespace entropy
 
 std::string generate_mnemonic(const uint128_t entropy) {
-    std::stringstream ss;
-    ss << std::hex << entropy;
-    std::cout << hash::hexSha256(ss.str()) << '\n';
+    std::stringstream entropy_hex;
+    entropy_hex << std::hex << entropy;
+
+    const std::string hex_hash = hash::hexSha256(entropy_hex.str());
+
+    std::string b = hash::hex2bin(entropy_hex.str());
+    const std::string checksum = hash::hex2bin(hex_hash).substr(0, 4);
+
+    b += checksum;
+
+    std::cout << b << std::endl;
 
     return "MNEMONIC";
 }
