@@ -1,6 +1,7 @@
 #include "bip39.hpp"
 
 #include "hash.hpp"
+#include "wordlist.hpp"
 
 namespace bip39 {
 const char DELIMITER = ' ';
@@ -29,9 +30,14 @@ std::string generate_mnemonic(const uint128_t entropy) {
 
     b += checksum;
 
-    std::cout << b << std::endl;
+    std::stringstream ss_mnemonic;
+    for (uint32_t i = 0; i < b.length() / 11; i++) {
+        ss_mnemonic << WORDLIST[hash::bin2dec(b.substr(i * 11, 11))] + " ";
+    }
 
-    return "MNEMONIC";
+    std::string mnemonic = ss_mnemonic.str();
+    mnemonic.pop_back();  // remove last space
+    return mnemonic;
 }
 
 }  // namespace bip39

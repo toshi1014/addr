@@ -25,8 +25,9 @@ void run(const uint32_t strength) {
     }
 }
 
-bool test(const uint128_t entropy, const std::string expected_address){
+bool test(const uint128_t entropy, const std::string expected_address) {
     std::string mnemonic = bip39::generate_mnemonic(entropy);
+    std::cout << "Mnemonic:\n " << mnemonic << std::endl;
     return mnemonic == expected_address;
     // return true;
 }

@@ -1,5 +1,7 @@
 #include "hash.hpp"
 
+#include <cmath>
+
 namespace hash {
 
 std::string sha256(const char* charArr, const uint32_t size) {
@@ -82,6 +84,15 @@ std::string hex2bin(const std::string& hex) {
     }
 
     return ss.str();
+}
+
+uint32_t bin2dec(const std::string& bin) {
+    uint32_t rtn = 0;
+
+    for (uint32_t i = 0; i <= bin.length() - 1; i++) {
+        rtn += ((int)(bin[i]) - '0') * std::pow(2, bin.length() - i - 1);
+    }
+    return rtn;
 }
 
 }  // namespace hash

@@ -15,6 +15,7 @@ void getHexStr(char*, const std::string&);
 std::string hexSha256(const std::string);
 std::string hex2bin_char(const char&);
 std::string hex2bin(const std::string&);
+uint32_t bin2dec(const std::string&);
 
 }  // namespace hash
 
