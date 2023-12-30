@@ -15,10 +15,10 @@ namespace entropy {
 uint128_t increment(const uint32_t);
 uint128_t CSPRNG(const uint32_t);
 // uint32_t PRNG(uint32_t strength);
-
 }  // namespace entropy
 
 std::string generate_mnemonic(const uint128_t);
+std::string mnemonic2seed(const std::string&);
 
 }  // namespace bip39
 #endif

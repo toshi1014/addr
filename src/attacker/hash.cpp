@@ -95,4 +95,19 @@ uint32_t bin2dec(const std::string& bin) {
     return rtn;
 }
 
+std::string PBKDF2_HMAC_SHA_512(const char* pass, const char* salt,
+                                const int32_t iterations,
+                                const uint32_t hash_size) {
+    unsigned char* digest = new unsigned char[hash_size];
+    PKCS5_PBKDF2_HMAC(pass, strlen(pass), (const unsigned char*)salt,
+                      strlen(salt), iterations, EVP_sha512(), hash_size,
+                      digest);
+
+    std::stringstream ss;
+    for (int i = 0; i < hash_size; i++) {
+        ss << format("%02x", digest[i]);
+    }
+    return ss.str();
+}
+
 }  // namespace hash

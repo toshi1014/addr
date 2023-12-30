@@ -4,6 +4,7 @@
 #include "wordlist.hpp"
 
 namespace bip39 {
+
 const char DELIMITER = ' ';
 
 namespace entropy {
@@ -38,6 +39,12 @@ std::string generate_mnemonic(const uint128_t entropy) {
     std::string mnemonic = ss_mnemonic.str();
     mnemonic.pop_back();  // remove last space
     return mnemonic;
+}
+
+std::string mnemonic2seed(const std::string& mnemonic) {
+    return hash::PBKDF2_HMAC_SHA_512(&(mnemonic[0]), "mnemonic",
+                                     hash::ITER_PBKDF2_HMAC,
+                                     hash::SIZE_PBKDF2_HMAC);
 }
 
 }  // namespace bip39
