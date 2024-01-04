@@ -43,8 +43,7 @@ std::string generate_mnemonic(const uint128_t entropy) {
 
 std::string mnemonic2seed(const std::string& mnemonic) {
     return hash::PBKDF2_HMAC_SHA_512(&(mnemonic[0]), "mnemonic",
-                                     hash::ITER_PBKDF2_HMAC,
-                                     hash::SIZE_PBKDF2_HMAC);
+                                     ITER_PBKDF2_HMAC, SIZE_PBKDF2_HMAC);
 }
 
 }  // namespace bip39

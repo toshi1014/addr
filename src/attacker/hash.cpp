@@ -1,14 +1,18 @@
 #include "hash.hpp"
 
-#include <cmath>
-
 namespace hash {
 
-std::string sha256(const char* charArr, const uint32_t size) {
+void getHexStr(char* hexStr, const std::string& str) {
+    for (uint32_t i = 0; i < str.length() / 2; i++) {
+        hexStr[i] = std::stol(str.substr(i * 2, 2), NULL, 16);
+    }
+}
+
+std::string sha256(const char* char_arr, const size_t size) {
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256_CTX sha256;
     SHA256_Init(&sha256);
-    SHA256_Update(&sha256, charArr, size);
+    SHA256_Update(&sha256, char_arr, size);
     SHA256_Final(hash, &sha256);
 
     std::stringstream ss;
@@ -20,13 +24,7 @@ std::string sha256(const char* charArr, const uint32_t size) {
     return ss.str();
 }
 
-void getHexStr(char* hexStr, const std::string& str) {
-    for (uint32_t i = 0; i < str.length() / 2; i++) {
-        hexStr[i] = std::stol(str.substr(i * 2, 2), NULL, 16);
-    }
-}
-
-std::string hexSha256(const std::string str) {
+std::string hexSha256(const std::string& str) {
     char hexStr[100];
     getHexStr(hexStr, str);
     return sha256(hexStr, str.length() / 2);
@@ -109,5 +107,83 @@ std::string PBKDF2_HMAC_SHA_512(const char* pass, const char* salt,
     }
     return ss.str();
 }
+
+std::string hmac(const char* msg, const size_t msg_size, const char* key,
+                 const size_t key_size, const EVP_MD* hash_func,
+                 unsigned int hash_size) {
+    unsigned char hash[100] = {};
+
+    HMAC_CTX* hmac = HMAC_CTX_new();
+    HMAC_Init_ex(hmac, key, key_size, hash_func, NULL);
+    HMAC_Update(hmac, (unsigned char*)&(msg[0]), msg_size);
+    HMAC_Final(hmac, hash, &hash_size);
+    HMAC_CTX_free(hmac);
+
+    std::stringstream ss;
+    for (uint32_t i = 0; i < hash_size; i++) {
+        ss << std::hex << std::setw(2) << std::setfill('0')
+           << static_cast<uint32_t>(hash[i]);
+    }
+
+    return ss.str();
+}
+
+std::string hexHmac(const std::string& msg, const std::string& key,
+                    const EVP_MD* hash_func, const unsigned int hash_size) {
+    char hexStr[100];
+    getHexStr(hexStr, msg);
+    return hmac(hexStr, msg.length() / 2, key.c_str(), key.length(), hash_func,
+                hash_size);
+}
+
+std::string hexHmacHexKey(const std::string& msg, const std::string& key,
+                          const EVP_MD* hash_func,
+                          const unsigned int hash_size) {
+    char hexMsg[100];
+    getHexStr(hexMsg, msg);
+    char hexKey[100];
+    getHexStr(hexKey, key);
+
+    return hmac(hexMsg, msg.length() / 2, hexKey, key.length() / 2, hash_func,
+                hash_size);
+}
+
+template <typename T>
+T hex2dec(const std::string& hex) {
+    T out = 0;
+    uint32_t size = hex.length();
+    for (uint32_t i = 0; i < size; i++)
+        out += static_cast<T>(std::stoi(hex2bin_char(hex[i]), NULL, 2) *
+                              std::pow(16, size - i - 1));
+    return out;
+}
+template int hex2dec<int>(const std::string&);
+template uint128_t hex2dec<uint128_t>(const std::string&);
+template uint256_t hex2dec<uint256_t>(const std::string&);
+
+inline std::string dec2hex_naive(const uint32_t dec) {
+    std::stringstream ss;
+    ss << std::hex << dec;
+    return ss.str();
+}
+
+template <typename T>
+std::string dec2hex(const T raw_src) {
+    std::string out{""};
+    T src{raw_src}, quo{src};
+    uint32_t rem{0};
+
+    while (quo > 15) {
+        quo = src / 16;
+        rem = (uint32_t)src % 16;
+        src = quo;
+        out = dec2hex_naive(rem) + out;
+    }
+
+    out = dec2hex_naive((uint32_t)quo) + out;
+    return out;
+}
+template std::string dec2hex<int>(const int);
+template std::string dec2hex<uint256_t>(const uint256_t);
 
 }  // namespace hash

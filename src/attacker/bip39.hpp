@@ -5,11 +5,14 @@
 #include <sys/random.h>
 
 #include <boost/multiprecision/cpp_int.hpp>
-#include <iostream>
+#include <ostream>
 #include <sstream>
 
 namespace bip39 {
 using namespace boost::multiprecision;
+
+const uint32_t ITER_PBKDF2_HMAC = 2048;
+const uint32_t SIZE_PBKDF2_HMAC = 64;
 
 namespace entropy {
 uint128_t increment(const uint32_t);

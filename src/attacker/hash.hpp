@@ -1,21 +1,21 @@
 #ifndef HASH_HPP
 #define HASH_HPP
 
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
+#include <openssl/hmac.h>
 #include <openssl/sha.h>
 
+#include <boost/multiprecision/cpp_int.hpp>
+#include <cmath>
 #include <cstring>
 #include <iomanip>
 #include <iostream>
+#include <ostream>
 #include <sstream>
 #include <vector>
 
 namespace hash {
 
-const uint32_t ITER_PBKDF2_HMAC= 2048;
-const uint32_t SIZE_PBKDF2_HMAC= 64;
+using namespace boost::multiprecision;
 
 template <typename... Args>
 std::string format(const std::string& fmt, Args... args) {
@@ -25,14 +25,25 @@ std::string format(const std::string& fmt, Args... args) {
     return std::string(&buf[0], &buf[0] + len);
 }
 
-std::string sha256(const char*, const uint32_t);
 void getHexStr(char*, const std::string&);
-std::string hexSha256(const std::string);
+std::string sha256(const char*, const size_t);
+std::string hexSha256(const std::string&);
 std::string hex2bin_char(const char&);
 std::string hex2bin(const std::string&);
 uint32_t bin2dec(const std::string&);
 std::string PBKDF2_HMAC_SHA_512(const char*, const char*, const int32_t,
                                 const uint32_t);
+std::string hmac(const char*, const size_t, const char*, const size_t,
+                 const EVP_MD*, const unsigned int);
+std::string hexHmac(const std::string&, const std::string&, const EVP_MD*,
+                    const unsigned int);
+std::string hexHmacHexKey(const std::string&, const std::string&, const EVP_MD*,
+                          const unsigned int);
+template <typename T>
+T hex2dec(const std::string&);
+template <typename T>
+std::string dec2hex(const T);
+inline std::string dec2hex_naive(const uint32_t);
 
 }  // namespace hash
 
