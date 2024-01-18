@@ -1,5 +1,4 @@
-from .hdkey_btc import HDKeyBTC
-from .hdkey_eth import HDKeyETH
+from .hdkey import HDKey
 from . import bip39
 from . import db_handlers
 from . import tools

@@ -2,8 +2,7 @@ import binascii
 import hashlib
 import itertools
 import os
-from hdkey_btc import HDKeyBTC
-from hdkey_eth import HDKeyETH
+from .hdkey import HDKey
 
 
 # ref. https://en.bitcoin.it/wiki/BIP_0039
@@ -121,25 +120,25 @@ def recover_entropy(mnemonic):
 
 
 def test():
-    entropy = "b0e8160f51929bf718a3f28ddc15cf27"
-    expected_addr_legacy = "15VLC7awxvzWR44vX5ruDGGUuNfzosJBct"
-    expected_addr_segwit = "bc1qlmak5sel2z9ugaxexcn538dkhsagnyvp30fzf0"
-    expected_addr_eth = "0x1ca21071b051df5901614be2a085cc0d655c7c6d"
+    import json
 
-    mnemonic = generate_mnemonic(entropy)
-    seed = mnemonics2seed(mnemonic)
-    addr_legacy = HDKeyBTC.seed2address(seed=seed, witness_type="legacy")
-    addr_segwit = HDKeyBTC.seed2address(seed=seed, witness_type="segwit")
-    addr_eth = HDKeyETH.seed2address(seed=seed)
-    recovered_entropy = recover_entropy(mnemonic)
+    with open("test/bip39.json", "r", encoding="utf-8") as f:
+        cases = json.loads(f.read())
 
-    assert validate_mnemonic(mnemonic)
-    assert entropy == recovered_entropy
-    assert addr_legacy == expected_addr_legacy
-    assert addr_segwit == expected_addr_segwit
-    assert addr_eth == expected_addr_eth
+    for case in cases:
+        mnemonic = generate_mnemonic(case["entropy"])
+        seed = mnemonics2seed(mnemonic)
+        addr_legacy = HDKey.seed2address(seed=seed, network="btc-legacy")
+        addr_segwit = HDKey.seed2address(seed=seed, network="btc-segwit")
+        addr_eth = HDKey.seed2address(seed=seed, network="eth")
+        recovered_entropy = recover_entropy(mnemonic)
+
+        assert validate_mnemonic(mnemonic)
+        assert recovered_entropy == case["entropy"]
+        assert addr_legacy == case["btc_legacy"]
+        assert addr_segwit == case["btc_segwit"]
+        assert addr_eth == case["eth"].lower()
 
 
 # Test
 #  * https://allprivatekeys.com/mnemonic-code-converter
-#  * https://mnemonic-phrase-generator.com/

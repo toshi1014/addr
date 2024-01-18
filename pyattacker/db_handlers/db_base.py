@@ -52,9 +52,10 @@ class DB:
 
         df = pd.read_csv(src_filename)
         df_ping = pd.DataFrame({
-            "address": [ping_data["addr_eth"]]
+            "address": ping_data["addr_eth"]
         })
         df = pd.concat([df[["address"]], df_ping], axis=0)
+        df = df.map(lambda x: x.lower())        # lower
 
         cls.insert(
             df=df,
@@ -71,7 +72,7 @@ class DB:
         # insert address for ping
         cls.insert_with_filter(
             df=pd.DataFrame({
-                "address": [ping_data["addr_legacy"], ping_data["addr_segwit"]]
+                "address": ping_data["addr_btc"]
             }),
             params_to_sql=params_to_sql,
         )

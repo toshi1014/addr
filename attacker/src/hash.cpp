@@ -158,8 +158,7 @@ T hex2dec(const std::string& hex) {
     return out;
 }
 template int hex2dec<int>(const std::string&);
-template uint128_t hex2dec<uint128_t>(const std::string&);
-template uint256_t hex2dec<uint256_t>(const std::string&);
+template uint512_t hex2dec<uint512_t>(const std::string&);
 
 inline std::string dec2hex_naive(const uint32_t dec) {
     std::stringstream ss;
@@ -184,6 +183,6 @@ std::string dec2hex(const T raw_src) {
     return out;
 }
 template std::string dec2hex<int>(const int);
-template std::string dec2hex<uint256_t>(const uint256_t);
+template std::string dec2hex<uint512_t>(const uint512_t);
 
 }  // namespace hash

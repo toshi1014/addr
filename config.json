@@ -5,10 +5,32 @@
     "DB_TYPE": "sqlite",
     "DB_TYPE!": "postgres",
     "PING_DATA": {
-        "entropy": "b0e8160f51929bf718a3f28ddc15cf27",
-        "addr_legacy": "15VLC7awxvzWR44vX5ruDGGUuNfzosJBct",
-        "addr_segwit": "bc1qlmak5sel2z9ugaxexcn538dkhsagnyvp30fzf0",
-        "addr_eth": "0x1ca21071b051df5901614be2a085cc0d655c7c6d"
+        "entropy": [
+            "b0e8160f51929bf718a3f28ddc15cf27",
+            "24cb4882451ae5691d55f7baffa44903",
+            "bc36169b77a91907c6f3f08d4c6a51c4",
+            "550e75282070aab3a312c9163bf09ed0",
+            "a2d6067782298ab2ad45ee289f815a65"
+        ],
+        "addr_btc": [
+            "15VLC7awxvzWR44vX5ruDGGUuNfzosJBct",
+            "bc1qlmak5sel2z9ugaxexcn538dkhsagnyvp30fzf0",
+            "1BKXiBmCk6oUgiZcib7FjQ3xeH6hhX6fvg",
+            "bc1q2elnqxxjgkuexv08a9wqa38fwx8tdl5s8tvpec",
+            "1JGt2CXVHErQeA7JF8Khvzad46GkX9AtWY",
+            "bc1qrxmn4lelhdlngm37em9ste3tlprcz7ayqz3f5l",
+            "1MAxVjmY3FgUcHNUjfTj19cbFYdVtSVu75",
+            "bc1qmf6s4v6pr6c9surgk5fdlqzc808a03xrpv42ug",
+            "1NAKFrCb2kWAo66iJvvFbBTzaG7Pz6Ugzj",
+            "bc1qjnlll0um8u485qt8vuftqs3cehkwr74y7rzd6v"
+        ],
+        "addr_eth": [
+            "0x1ca21071b051df5901614be2a085cc0d655c7c6d",
+            "0x77Bd3DCC32d478d1e8c62923982967c8c8681de5",
+            "0x31023E2bAB61A7E740a1E88D0426af4e8a35be01",
+            "0xb0561f4dd964368f70631935d50f5bdab73a8904",
+            "0xb8e8c96f11db5dd8c0dbad1717d6b8d47160cc3f"
+        ]
     },
     "LINE_TOKEN": "9njgywvEbU1nc0lfu1M6uP89NNNWXZ7Ldyk123HsGeH"
 }
