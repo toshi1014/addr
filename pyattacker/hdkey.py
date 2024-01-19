@@ -11,14 +11,6 @@ from . import encoding_tools
 
 
 SUPPORTED_NETWORK = {"btc-legacy", "btc-segwit", "eth"}
-PATH_TEMPLATE = [
-    "m",
-    "purpose'",
-    "coin_type'",
-    "account'",
-    "change",
-    "address_index",
-]
 
 
 def hash160(string):
@@ -65,14 +57,12 @@ class HDKey:
         self,
         key=None,
         chain=None,
-        child_index=None,
         depth=None,
         encoding=None,
         prefix=None,
     ):
         self.key = key
         self.chain = chain
-        self.child_index = child_index
         self.depth = depth
         self.encoding = encoding
         self.prefix = prefix
@@ -94,10 +84,6 @@ class HDKey:
             prefix = "02"
 
         return prefix + hex(self.point.x)[2:].zfill(64)
-
-    @property
-    def public_byte(self):
-        return bytes.fromhex(self.public_hex)
 
     @classmethod
     def from_seed(cls, seed, encoding, prefix):
@@ -124,7 +110,7 @@ class HDKey:
             index |= 0x80000000
             seed = b"\0" + hdkey.private_byte + index.to_bytes(4, "big")
         else:
-            seed = hdkey.public_byte + index.to_bytes(4, "big")
+            seed = bytes.fromhex(hdkey.public_hex) + index.to_bytes(4, "big")
 
         key, chain = HDKey.key_derivation(seed, hdkey.chain)
 
@@ -136,23 +122,20 @@ class HDKey:
             key=newkey,
             chain=chain,
             depth=hdkey.depth + 1,
-            child_index=index,
             encoding=hdkey.encoding,
             prefix=hdkey.prefix,
         )
 
     @classmethod
-    def subkey_for_path(cls, hdkey, path):
-        path = path.split("/")
+    def subkey(cls, hdkey, path):
         key = hdkey
-        for item in path:
-            hardened = item[-1] in "'HhPp"
-            if hardened:
-                item = item[:-1]
-            index = int(item)
+        hardened = path[-1] in "'HhPp"
+        if hardened:
+            path = path[:-1]
+        index = int(path)
 
-            key = cls.child_private(
-                key, index=index, hardened=hardened)
+        key = cls.child_private(
+            key, index=index, hardened=hardened)
         return key
 
     @classmethod
@@ -160,30 +143,24 @@ class HDKey:
         assert network in SUPPORTED_NETWORK
 
         if network == "btc-legacy":
-            fullpath = ['m', "44'", "0'", "0'", '0', '0']
+            fullpath = ["44'", "0'", "0'", '0', '0']
             encoding, prefix = "base58", b'\x00'
         elif network == "btc-segwit":
-            fullpath = ['m', "84'", "0'", "0'", '0', '0']
+            fullpath = ["84'", "0'", "0'", '0', '0']
             encoding, prefix = "bech32", "bc"
         elif network == "eth":
-            fullpath = ['m', "44'", "60'", "0'", '0', '0']
+            fullpath = ["44'", "60'", "0'", '0', '0']
             encoding, prefix = None, None
         else:
             raise ValueError()
 
         hdkey = cls.from_seed(seed, encoding, prefix)
 
-        newpath = "m"
-        for lvl in fullpath[1:]:
-            hdkey = HDKey.subkey_for_path(
+        for path in fullpath:
+            hdkey = HDKey.subkey(
                 hdkey=hdkey,
-                path=lvl,
+                path=path,
             )
-
-            newpath += "/" + lvl
-            key_name = "%s %s" % (
-                PATH_TEMPLATE[len(newpath.split("/"))-1], lvl)
-            key_name = key_name.replace("'", "").replace("_", " ")
 
         # addr
         if "btc" in network:

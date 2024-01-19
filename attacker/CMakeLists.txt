@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22 FATAL_ERROR)
 
 project(attacker)
 
-set(SRC_DIR .)
+set(SRC_DIR src)
 set(EXE_FILENAME a.out)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set(OPENSSL_USE_STATIC_LIBS TRUE)
@@ -23,10 +23,13 @@ add_library(
     ${CPP_FILE}
 )
 
+
 add_executable(
     ${EXE_FILENAME}
     ${SRC_DIR}/main.cpp
 )
+
+include_directories(include)
 
 target_include_directories(
     ${EXE_FILENAME}

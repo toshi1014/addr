@@ -11,6 +11,33 @@
 
 namespace hdkey {
 
+enum Network { BtcLegacy, BtcSegwit, Eth };
+
+enum Encoding { base58, bech32 };
+
+using namespace boost::multiprecision;
+
+class AHDKey {
+   private:
+    uint512_t key;
+    std::string chain_code;
+    uint32_t depth;
+    Encoding encoding;
+    std::string prefix;
+
+   public:
+    AHDKey(uint512_t, std::string, uint32_t, Encoding, std::string);
+    static AHDKey from_seed(const std::string&, const Encoding&,
+                            const std::string&);
+    static AHDKey child_private(AHDKey&, uint32_t, bool);
+    static AHDKey subkey(AHDKey&, std::string);
+    static std::string seed2addr(const std::string&);
+};
+
+}  // namespace hdkey
+
+namespace hdkey {
+
 using namespace boost::multiprecision;
 
 const uint512_t CURVE_N(
