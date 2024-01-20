@@ -29,8 +29,7 @@ void run(const uint32_t strength) {
 bool test(const uint128_t entropy, const std::string expected_address) {
     const std::string mnemonic = bip39::generate_mnemonic(entropy);
     const std::string seed = bip39::mnemonic2seed(mnemonic);
-    // const std::string addr = hdkey::HDKeyEth::seed2addr(seed);
-    const std::string addr = hdkey::AHDKey::seed2addr(seed);
+    const std::string addr = hdkey::HDKey::seed2addr(seed);
 
     std::cout << "Mnemonic:\n " << mnemonic << std::endl;
     std::cout << "\nSeed:\n " << seed << std::endl;

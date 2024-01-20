@@ -42,3 +42,9 @@ target_link_libraries(
     mylib
     OpenSSL::Crypto
 )
+
+target_link_libraries(
+    ${EXE_FILENAME}
+    mylib
+    /usr/local/lib/libsecp256k1.a
+)
