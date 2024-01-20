@@ -185,4 +185,50 @@ std::string dec2hex(const T raw_src) {
 template std::string dec2hex<int>(const int);
 template std::string dec2hex<uint512_t>(const uint512_t);
 
+std::string hexRipemd160(const std::string& str) {
+    char hexStr[100];
+    getHexStr(hexStr, str);
+
+    uint8_t ripeHash[RIPEMD160_DIGEST_LENGTH];
+    RIPEMD160((const unsigned char*)hexStr, str.length() / 2, ripeHash);
+
+    std::stringstream ss1, ss2;
+    for (const auto& h : ripeHash) {
+        ss1 << std::setfill('0') << std::right << std::setw(2) << std::hex
+            << (int)h;
+    }
+    ss2 << std::setfill('0') << std::right << std::setw(40) << ss1.str();
+    return ss2.str();
+}
+
+std::string sha3_256(const char* char_arr, const size_t size) {
+    EVP_MD_CTX* context = EVP_MD_CTX_new();
+    const EVP_MD* algo = EVP_sha3_256();
+
+    EVP_DigestInit_ex(context, algo, nullptr);
+    EVP_DigestUpdate(context, char_arr, size);
+
+    uint32_t digest_len = EVP_MD_size(algo);
+    unsigned char* digest =
+        static_cast<unsigned char*>(OPENSSL_malloc(digest_len));
+
+    EVP_DigestFinal_ex(context, digest, &digest_len);
+
+    std::stringstream ss;
+    for (uint32_t i = 0; i < digest_len; i++) {
+        ss << std::hex << std::setw(2) << std::setfill('0')
+           << static_cast<uint32_t>(digest[i]);
+    }
+
+    OPENSSL_free(digest);
+
+    return ss.str();
+}
+
+std::string hex_sha3_256(const std::string& str) {
+    char hexStr[100];
+    getHexStr(hexStr, str);
+    return sha3_256(hexStr, str.length() / 2);
+}
+
 }  // namespace hash

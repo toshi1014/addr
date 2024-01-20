@@ -18,6 +18,7 @@ class PublicKey {
 
    public:
     secp256k1_pubkey pubkey;
+
     PublicKey(const uint512_t);
     std::string get_x();
     std::string get_y();

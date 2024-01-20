@@ -39,15 +39,15 @@ class AddrGenerator:
     @classmethod
     def addr_eth(cls, hdkey):
         nbytes = 32
-        bytep = bytes([0x04]) + \
-            hdkey.point.x.to_bytes(nbytes, 'big') + \
+        bytep = hdkey.point.x.to_bytes(nbytes, 'big') + \
             hdkey.point.y.to_bytes(nbytes, 'big')
 
-        arg = sha3(bytep[1:])[12:]
+        arg1 = sha3(bytep)
+        arg2 = arg1[12:]
+        import pdb; pdb.set_trace()
 
         version = '0x'
-        addr = version + \
-            binascii.hexlify(arg).decode('ascii')
+        addr = version + arg2.hex()
 
         return addr
 

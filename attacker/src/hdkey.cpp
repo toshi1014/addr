@@ -1,6 +1,6 @@
 #include "hdkey.hpp"
 
-#include "public_key.hpp"
+#include "address.hpp"
 
 namespace hdkey {
 
@@ -61,23 +61,29 @@ HDKey HDKey::subkey(HDKey& hdkey, std::string path) {
 }
 
 std::string HDKey::seed2addr(const std::string& seed) {
-    Network network = BtcLegacy;
+    // Network network = BtcLegacy;
+    Network network = Eth;
+
     Path fullpath;
     Encoding encoding;
     std::string prefix;
+    const std::string (*func_addr_gen)(const Path, const HDKey&);
 
     if (network == BtcLegacy) {
         fullpath = {"44'", "0'", "0'", "0", "0"};
         encoding = Encoding::base58;
         prefix = "00";
+        func_addr_gen = address::to_btc;
     } else if (network == BtcSegwit) {
         fullpath = {"84'", "0'", "0'", "0", "0"};
         encoding = Encoding::bech32;
         prefix = "bc";
+        func_addr_gen = address::to_btc;
     } else if (network == Eth) {
         fullpath = {"44'", "60'", "0'", "0", "0"};
         // encoding = NULL;
-        prefix = nullptr;
+        prefix = "";
+        func_addr_gen = address::to_eth;
     } else {
         throw std::invalid_argument("bad network");
     }
@@ -86,6 +92,7 @@ std::string HDKey::seed2addr(const std::string& seed) {
 
     for (const std::string& path : fullpath) hdkey = HDKey::subkey(hdkey, path);
 
-    return "AA";
+    return func_addr_gen(fullpath, hdkey);
 }
+
 }  // namespace hdkey

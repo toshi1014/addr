@@ -2,6 +2,7 @@
 #define HASH_HPP
 
 #include <openssl/hmac.h>
+#include <openssl/ripemd.h>
 #include <openssl/sha.h>
 
 #include <boost/multiprecision/cpp_int.hpp>
@@ -44,6 +45,9 @@ T hex2dec(const std::string&);
 template <typename T>
 std::string dec2hex(const T);
 inline std::string dec2hex_naive(const uint32_t);
+std::string hexRipemd160(const std::string&);
+std::string sha3_256(const char*, const size_t);
+std::string hex_sha3_256(const std::string&);
 
 }  // namespace hash
 
