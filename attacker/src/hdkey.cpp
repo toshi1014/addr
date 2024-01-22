@@ -12,6 +12,13 @@ HDKey::HDKey(uint512_t key, std::string chain_code, uint32_t depth,
       encoding(encoding),
       prefix(prefix) {}
 
+const std::string HDKey::get_key_hex() const {
+    std::stringstream ss;
+    ss << std::setw(KEY_SIZE) << std::setfill('0')
+       << hash::dec2hex<uint512_t>(this->key);
+    return ss.str();
+};
+
 HDKey HDKey::from_seed(const std::string& seed, const Encoding& encoding,
                        const std::string& prefix) {
     const std::string key = "Bitcoin seed";
@@ -29,8 +36,7 @@ HDKey HDKey::child_private(HDKey& hdkey, uint32_t index, bool hardened) {
 
     if (hardened) {
         index |= 2147483648;  // 2147483648 is 0x80000000
-        seed = "00" + hash::dec2hex<uint512_t>(hdkey.key) +
-               hash::dec2hex_naive(index);
+        seed = "00" + hdkey.get_key_hex() + hash::dec2hex_naive(index);
 
     } else {
         public_key::PublicKey pubkey{hdkey.key};

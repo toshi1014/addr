@@ -16,6 +16,12 @@
 
 namespace hash {
 
+extern "C" {
+const char* keccak(const char*);
+}
+
+#pragma comment(lib, "rusthash.a.lib")
+
 using namespace boost::multiprecision;
 
 template <typename... Args>

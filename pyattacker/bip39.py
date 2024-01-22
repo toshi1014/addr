@@ -137,7 +137,7 @@ def test():
         assert recovered_entropy == case["entropy"]
         assert addr_legacy == case["btc_legacy"]
         assert addr_segwit == case["btc_segwit"]
-        assert addr_eth == case["eth"].lower()
+        assert addr_eth == case["eth"]
 
 
 # Test

@@ -18,19 +18,18 @@ const std::string to_btc(const hdkey::Path fullpath,
 
 const std::string to_eth(const hdkey::Path fullpath,
                          const hdkey::HDKey& hdkey) {
-    constexpr uint32_t SIZE = 32;
+    constexpr size_t SIZE = 32;
+    constexpr size_t IDX_SHA3_TRIM = 24;
+
     public_key::PublicKey pubkey{hdkey.get_key()};
-    std::stringstream ss;
-    ss << std::setfill('0') << std::right << std::setw(SIZE)
-       << pubkey.get_x()  // x
-       << std::setfill('0') << std::right << std::setw(SIZE)
-       << pubkey.get_y();  // y
+    std::stringstream ss_xy;
+    ss_xy << std::setfill('0') << std::right << std::setw(SIZE)
+          << pubkey.get_x()  // x
+          << std::setfill('0') << std::right << std::setw(SIZE)
+          << pubkey.get_y();  // y
 
-    std::string output = hash::hex_sha3_256(ss.str());
-    std::cout << ss.str() << std::endl;
-    std::cout << output << std::endl;
-
-    return "A";
+    const std::string hashed = hash::keccak(ss_xy.str().c_str());
+    return "0x" + hashed.substr(IDX_SHA3_TRIM, 100);
 }
 
 }  // namespace address

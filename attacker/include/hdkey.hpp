@@ -18,6 +18,7 @@ using Path = std::vector<std::string>;
 
 enum Network { BtcLegacy, BtcSegwit, Eth };
 enum Encoding { base58, bech32 };
+constexpr size_t KEY_SIZE = 64;
 
 const uint512_t CURVE_N(
     "11579208923731619542357098500868790785283756427907490438260516314151816149"
@@ -33,6 +34,7 @@ class HDKey {
 
    public:
     HDKey(uint512_t, std::string, uint32_t, Encoding, std::string);
+    const std::string get_key_hex() const;
 
     static HDKey from_seed(const std::string&, const Encoding&,
                            const std::string&);

@@ -42,12 +42,8 @@ class AddrGenerator:
         bytep = hdkey.point.x.to_bytes(nbytes, 'big') + \
             hdkey.point.y.to_bytes(nbytes, 'big')
 
-        arg1 = sha3(bytep)
-        arg2 = arg1[12:]
-        import pdb; pdb.set_trace()
-
         version = '0x'
-        addr = version + arg2.hex()
+        addr = version + sha3(bytep)[12:].hex()
 
         return addr
 

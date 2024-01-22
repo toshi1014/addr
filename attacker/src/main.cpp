@@ -2,14 +2,22 @@
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <cmath>
+#include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 #include "bip39.hpp"
+#include "hash.hpp"
 #include "hdkey.hpp"
 
-using namespace boost::multiprecision;
+namespace {
 
-void run(const uint32_t strength) {
+using namespace boost::multiprecision;
+constexpr char TEST_FILEPATH[] = "test/bip39.json";
+
+}  // namespace
+
+void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
     // std::string strLim = "340282366920938463463374607431768211455";
     std::string strLim = "1";
@@ -25,20 +33,40 @@ void run(const uint32_t strength) {
     }
 }
 
-bool test(const uint128_t entropy, const std::string expected_address) {
+std::string entropy2addr(const std::string entropy_hex) {
+    const uint128_t entropy = hash::hex2dec<uint128_t>(entropy_hex);
     const std::string mnemonic = bip39::generate_mnemonic(entropy);
     const std::string seed = bip39::mnemonic2seed(mnemonic);
     const std::string addr = hdkey::HDKey::seed2addr(seed);
 
-    std::cout << "Mnemonic:\n " << mnemonic << std::endl;
-    std::cout << "\nSeed:\n " << seed << std::endl;
-    std::cout << "\nAddr:\n " << addr << std::endl;
-    return addr == expected_address;
+    std::cout << "Entropy: " << entropy_hex << std::endl;
+    std::cout << "Mnemonic: " << mnemonic << std::endl;
+    std::cout << "Seed:\t" << seed << std::endl;
+    std::cout << "Addr:\t" << addr << "\n" << std::endl;
+    return addr;
+}
+
+void test() {
+    using nlohmann::json;
+
+    std::ifstream test_file(TEST_FILEPATH);
+    json test_cases;
+    test_file >> test_cases;
+
+    for (const auto& test_case : test_cases) {
+        const std::string addr_eth =
+            entropy2addr(test_case["entropy"].get<std::string>());
+        assert(addr_eth == test_case["eth"].get<std::string>());
+    }
 }
 
 int main() {
-    // run(128);
-    assert(
-        test(static_cast<uint128_t>("150974943580811493896868640541295935281"),
-             "0x01a41a60977de7bde9d181508f3ecece41e31e55"));
+    // bruteforce(128);
+
+    // const std::string entropy_hex = "b0e8160f51929bf718a3f28ddc15cf27";
+    // const std::string expected_addr =
+    //     "0x1ca21071b051df5901614be2a085cc0d655c7c6d";
+    // assert(entropy2addr(entropy_hex) == expected_addr);
+
+    test();
 }

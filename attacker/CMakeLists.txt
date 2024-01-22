@@ -7,6 +7,7 @@ set(EXE_FILENAME a.out)
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set(OPENSSL_USE_STATIC_LIBS TRUE)
 
+include(FetchContent)
 find_package(OpenSSL REQUIRED)
 
 add_compile_options(
@@ -22,7 +23,6 @@ add_library(
     STATIC
     ${CPP_FILE}
 )
-
 
 add_executable(
     ${EXE_FILENAME}
@@ -41,10 +41,21 @@ target_link_libraries(
     ${EXE_FILENAME}
     mylib
     OpenSSL::Crypto
+    /usr/local/lib/libsecp256k1.a
+    /usr/local/lib/libsecp256k1.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/../rusthash/target/release/librusthash.a
+    nlohmann_json::nlohmann_json
 )
 
+# json lib
+FetchContent_Declare(
+    json
+    URL
+    https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz
+)
+FetchContent_MakeAvailable(json)
 target_link_libraries(
-    ${EXE_FILENAME}
     mylib
-    /usr/local/lib/libsecp256k1.a
+    PRIVATE
+    nlohmann_json::nlohmann_json
 )
