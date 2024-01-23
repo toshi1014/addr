@@ -12,4 +12,11 @@ json read_json(const std::string filepath) {
     return j;
 }
 
+double clock() {
+    using namespace std::chrono;
+
+    return (duration_cast<milliseconds>(steady_clock::now().time_since_epoch())
+                .count());
+}
+
 }  // namespace utils

@@ -24,7 +24,6 @@ class DBSqlite {
    public:
     bool has_balance(const std::string &);
     DBSqlite();
-    ~DBSqlite();
 };
 }  // namespace db
 

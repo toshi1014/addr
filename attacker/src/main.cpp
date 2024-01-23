@@ -62,12 +62,15 @@ void ping(db::DBSqlite db) {
 void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
     // std::string strLim = "340282366920938463463374607431768211455";
-    const std::string strLim = "1000";
+    const std::string strLim = "10000";
     const uint128_t lim(strLim);
     db::DBSqlite db{};
 
     uint128_t (*func_gen_entropy)(uint32_t);
     func_gen_entropy = *bip39::entropy::CSPRNG;
+
+    double clock = utils::clock();
+    std::cout << "Loop\tDelta (sec)" << std::endl;
 
     for (uint32_t i = 0; i < lim; i++) {
         const uint128_t entropy = func_gen_entropy(i);
@@ -77,9 +80,12 @@ void bruteforce(const uint32_t strength) {
             found(entropy);
         }
 
-        if (i % 1000000 == 0) {
+        if (i % 1000 == 0) {
             ping(db);
-            std::cout << "ping " << i << std::endl;
+            double clock_tmp = utils::clock();
+            std::cout << i << "\t" << (clock_tmp - clock) / 1000 
+                      << std::endl;
+            clock = clock_tmp;
         }
     }
 }

@@ -53,6 +53,5 @@ DBSqlite::DBSqlite() {
         this->eth_idx.push_back(val.get<std::string>());
     }
 }
-DBSqlite::~DBSqlite() { sqlite3_close(this->db); }
 
 }  // namespace db
