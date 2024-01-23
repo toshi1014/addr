@@ -41,6 +41,7 @@ target_link_libraries(
     ${EXE_FILENAME}
     mylib
     OpenSSL::Crypto
+    sqlite3
     /usr/local/lib/libsecp256k1.a
     /usr/local/lib/libsecp256k1.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../rusthash/target/release/librusthash.a

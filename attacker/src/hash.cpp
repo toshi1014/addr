@@ -161,7 +161,7 @@ template int hex2dec<int>(const std::string&);
 template uint128_t hex2dec<uint128_t>(const std::string&);
 template uint512_t hex2dec<uint512_t>(const std::string&);
 
-inline std::string dec2hex_naive(const uint32_t dec) {
+std::string dec2hex_naive(const uint32_t dec) {
     std::stringstream ss;
     ss << std::hex << dec;
     return ss.str();
