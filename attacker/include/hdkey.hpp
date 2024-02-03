@@ -34,7 +34,8 @@ class HDKey {
     std::string prefix;
 
    public:
-    HDKey(uint512_t, collections::HexArray, uint32_t, Encoding, std::string);
+    HDKey(const uint512_t, collections::HexArray, const uint32_t,
+          const Encoding, const std::string&);
     const std::string get_key_hex() const;
 
     static HDKey from_seed(const collections::HexArray&, const Encoding&,
@@ -44,7 +45,7 @@ class HDKey {
     static std::string seed2addr(const collections::HexArray&);
 
     // COMBAK:
-    const uint512_t get_key() const { return key; };
+    const uint512_t get_key() const { return key; }
 };
 
 }  // namespace hdkey

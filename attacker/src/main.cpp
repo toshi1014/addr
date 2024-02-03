@@ -1,6 +1,5 @@
-#include <assert.h>
-
 #include <boost/multiprecision/cpp_int.hpp>
+#include <cassert>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -21,11 +20,9 @@ constexpr char CONFIG_FILEPATH[] = "config.json";
 
 const auto config = utils::read_json(CONFIG_FILEPATH);
 
-}  // namespace
-
-std::string entropy2addr(const uint128_t entropy, bool verbose) {
+const std::string entropy2addr(const uint128_t entropy, bool verbose) {
     const std::string mnemonic = bip39::generate_mnemonic(entropy);
-    collections::HexArrayPtr seed_hexarr = bip39::mnemonic2seed(mnemonic);
+    const collections::HexArrayPtr seed_hexarr = bip39::mnemonic2seed(mnemonic);
     const std::string addr = hdkey::HDKey::seed2addr(*seed_hexarr);
 
     if (verbose) {
@@ -36,7 +33,7 @@ std::string entropy2addr(const uint128_t entropy, bool verbose) {
     return addr;
 }
 
-std::string entropy2addr(const std::string entropy_hex, bool verbose) {
+const std::string entropy2addr(const std::string entropy_hex, bool verbose) {
     if (verbose) std::cout << "Entropy:\t" << entropy_hex << std::endl;
 
     const uint128_t entropy = hash::hex2dec<uint128_t>(entropy_hex);
@@ -44,7 +41,7 @@ std::string entropy2addr(const std::string entropy_hex, bool verbose) {
 }
 
 void found(const uint128_t entropy) {
-    std::string mnemonic = bip39::generate_mnemonic(entropy);
+    const std::string mnemonic = bip39::generate_mnemonic(entropy);
     std::cout << mnemonic << std::endl;
 
     // file write
@@ -62,10 +59,10 @@ void ping(db::DBSqlite db) {
 
 void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
-    // std::string strLim = "340282366920938463463374607431768211455";
+    // const std::string strLim = "340282366920938463463374607431768211455";
     const std::string strLim = "10000";
     const uint32_t interval{1000};
-    const uint128_t lim(strLim);
+    const uint128_t lim{strLim};
     db::DBSqlite db{};
 
     uint128_t (*func_gen_entropy)(uint32_t);
@@ -101,6 +98,8 @@ void test() {
         assert(addr_eth == test_case["eth"].get<std::string>());
     }
 }
+
+}  // namespace
 
 int main() {
     bruteforce(128);

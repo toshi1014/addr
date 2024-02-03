@@ -20,18 +20,17 @@ uint128_t CSPRNG(const uint32_t i) {
 
 }  // namespace entropy
 
-std::string generate_mnemonic(const uint128_t entropy) {
+const std::string generate_mnemonic(const uint128_t entropy) {
     std::stringstream entropy_hex;
     entropy_hex << std::hex << entropy;
 
-    collections::HexArrayPtr hash_hexarr =
-        hash::hexSha256(collections::HexArray::from_str(entropy_hex.str()));
+    collections::HexArray entropy_hexarr =
+        collections::HexArray::from_str(entropy_hex.str());
 
-    std::string b = hash::hex2bin(entropy_hex.str());
     const std::string checksum =
-        hash::hex2bin(hash_hexarr->to_str()).substr(0, 4);
+        hash::hex2bin(hash::hexSha256(entropy_hexarr)->to_str()).substr(0, 4);
 
-    b += checksum;
+    const std::string b = hash::hex2bin(entropy_hex.str()) + checksum;
 
     std::stringstream ss_mnemonic;
     for (uint32_t i = 0; i < b.length() / 11; i++) {
@@ -43,7 +42,7 @@ std::string generate_mnemonic(const uint128_t entropy) {
     return mnemonic;
 }
 
-collections::HexArrayPtr mnemonic2seed(const std::string& mnemonic) {
+const collections::HexArrayPtr mnemonic2seed(const std::string& mnemonic) {
     return hash::PBKDF2_HMAC_SHA_512(&(mnemonic[0]), "mnemonic",
                                      ITER_PBKDF2_HMAC, SIZE_PBKDF2_HMAC);
 }

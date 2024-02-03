@@ -10,7 +10,7 @@ static int callback(void *_, int argc, char **argv, char **columnName) {
     return SQLITE_OK;
 }
 
-std::string DBSqlite::get_tbl_name(const std::string &addr) {
+const std::string DBSqlite::get_tbl_name(const std::string &addr) const {
     size_t i = 0;
     for (const auto &a : this->eth_idx) {
         if (strcmp(addr.c_str(), a.c_str()) < 0) {

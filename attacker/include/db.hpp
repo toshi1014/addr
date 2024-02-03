@@ -19,7 +19,7 @@ class DBSqlite {
     int count = 0;
 
     std::vector<std::string> eth_idx;
-    std::string get_tbl_name(const std::string &);
+    const std::string get_tbl_name(const std::string &) const;
 
    public:
     bool has_balance(const std::string &);

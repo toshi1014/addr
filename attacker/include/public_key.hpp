@@ -14,16 +14,16 @@ class PublicKey {
     secp256k1_context* ctx;
     unsigned char seckey[32];
 
-    std::string parse_pubkey(size_t, int32_t);
+    const std::string parse_pubkey(size_t, int32_t) const;
 
    public:
     secp256k1_pubkey pubkey;
 
     PublicKey(const uint512_t);
-    std::string get_x();
-    std::string get_y();
-    std::string compressed();
     ~PublicKey();
+    const std::string get_x() const;
+    const std::string get_y() const;
+    const std::string compressed() const;
 };
 
 /* Cleanses memory to prevent leaking sensitive info. Won't be optimized out. */

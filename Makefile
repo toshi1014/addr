@@ -6,7 +6,7 @@ all:
 init_db:
 	@python3 pyattacker/init_db.py
 
-run_cpp:
+run_cpp: attacker/CMakeLists.txt
 	@cargo build --release --manifest-path rusthash/Cargo.toml
 	@cmake attacker -B ${BUILD_DIR}
 	@cmake --build ${BUILD_DIR}

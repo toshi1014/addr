@@ -4,8 +4,9 @@
 
 namespace hdkey {
 
-HDKey::HDKey(uint512_t key, collections::HexArray chain_code, uint32_t depth,
-             Encoding encoding, std::string prefix)
+HDKey::HDKey(const uint512_t key, collections::HexArray chain_code,
+             const uint32_t depth, const Encoding encoding,
+             const std::string& prefix)
     : key(key),
       chain_code(chain_code),
       depth(depth),

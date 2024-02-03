@@ -17,7 +17,7 @@ collections::HexArrayPtr hexSha256(const collections::HexArray& hexarr) {
     return sha256((const char*)hexarr.get_byte(), hexarr.get_size() / 2);
 }
 
-std::string hex2bin_char(const char& c) {
+const std::string hex2bin_char(const char& c) {
     switch (c) {
         case '0':
             return "0000";
@@ -62,7 +62,7 @@ std::string hex2bin_char(const char& c) {
     }
 }
 
-std::string hex2bin(const std::string& hex) {
+const std::string hex2bin(const std::string& hex) {
     std::stringstream ss;
     for (const char& c : hex) {
         ss << hex2bin_char(c);
@@ -71,7 +71,7 @@ std::string hex2bin(const std::string& hex) {
     return ss.str();
 }
 
-uint32_t bin2dec(const std::string& bin) {
+const uint32_t bin2dec(const std::string& bin) {
     uint32_t rtn = 0;
 
     for (uint32_t i = 0; i <= bin.length() - 1; i++) {
@@ -125,7 +125,7 @@ collections::HexArrayPtr hexHmacHexKey(const collections::HexArray& msg_hexarr,
 }
 
 template <typename T>
-T hex2dec(const std::string& hex) {
+const T hex2dec(const std::string& hex) {
     T out = 0;
     uint32_t size = hex.length();
     for (uint32_t i = 0; i < size; i++)
@@ -133,18 +133,18 @@ T hex2dec(const std::string& hex) {
                               std::pow(16, size - i - 1));
     return out;
 }
-template int hex2dec<int>(const std::string&);
-template uint128_t hex2dec<uint128_t>(const std::string&);
-template uint512_t hex2dec<uint512_t>(const std::string&);
+template const int32_t hex2dec<int32_t>(const std::string&);
+template const uint128_t hex2dec<uint128_t>(const std::string&);
+template const uint512_t hex2dec<uint512_t>(const std::string&);
 
-std::string dec2hex_naive(const uint32_t dec) {
+const std::string dec2hex_naive(const uint32_t dec) {
     std::stringstream ss;
     ss << std::hex << dec;
     return ss.str();
 }
 
 template <typename T>
-std::string dec2hex(const T raw_src) {
+const std::string dec2hex(const T raw_src) {
     std::string out{""};
     T src{raw_src}, quo{src};
     uint32_t rem{0};
@@ -159,10 +159,10 @@ std::string dec2hex(const T raw_src) {
     out = dec2hex_naive((uint32_t)quo) + out;
     return out;
 }
-template std::string dec2hex<int>(const int);
-template std::string dec2hex<uint512_t>(const uint512_t);
+template const std::string dec2hex<int32_t>(const int32_t);
+template const std::string dec2hex<uint512_t>(const uint512_t);
 
-std::string hexRipemd160(const collections::HexArray& hexarr) {
+const std::string hexRipemd160(const collections::HexArray& hexarr) {
     uint8_t ripeHash[RIPEMD160_DIGEST_LENGTH];
     RIPEMD160((const unsigned char*)hexarr.get_byte(), hexarr.get_size() / 2,
               ripeHash);
@@ -176,7 +176,7 @@ std::string hexRipemd160(const collections::HexArray& hexarr) {
     return ss2.str();
 }
 
-std::string sha3_256(const char* char_arr, const size_t size) {
+const std::string sha3_256(const char* char_arr, const size_t size) {
     EVP_MD_CTX* context = EVP_MD_CTX_new();
     const EVP_MD* algo = EVP_sha3_256();
 

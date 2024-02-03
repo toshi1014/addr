@@ -12,7 +12,7 @@ json read_json(const std::string filepath) {
     return j;
 }
 
-double clock() {
+const double clock() {
     using namespace std::chrono;
 
     return (duration_cast<milliseconds>(steady_clock::now().time_since_epoch())

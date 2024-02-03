@@ -4,13 +4,17 @@ project(attacker)
 
 set(SRC_DIR src)
 set(EXE_FILENAME a.out)
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+# set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(OPENSSL_USE_STATIC_LIBS TRUE)
 
 include(FetchContent)
 find_package(OpenSSL REQUIRED)
 
 add_compile_options(
+    -O0
+    -mtune=native
+    -march=native
+
     -std=c++17
     -Wall
     --pedantic-error

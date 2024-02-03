@@ -2,7 +2,7 @@
 
 namespace public_key {
 
-std::string PublicKey::parse_pubkey(size_t from, int32_t to) {
+const std::string PublicKey::parse_pubkey(size_t from, int32_t to) const {
     std::stringstream point;
 
     for (int32_t idx = from; to <= idx; idx--) {
@@ -40,26 +40,24 @@ PublicKey::PublicKey(const uint512_t int_seckey) {
     assert(return_val);
 }
 
-std::string PublicKey::get_x() {
+const std::string PublicKey::get_x() const {
     return this->parse_pubkey(sizeof(this->pubkey) / 2 - 1,  // from
                               0                              // to
     );
 };
-std::string PublicKey::get_y() {
+const std::string PublicKey::get_y() const {
     return this->parse_pubkey(sizeof(this->pubkey) - 1,  // from
                               sizeof(this->pubkey) / 2   // to
     );
 };
 
-std::string PublicKey::compressed() {
+const std::string PublicKey::compressed() const {
     unsigned char compressed_pubkey[33];
     size_t len = sizeof(compressed_pubkey);
-    int32_t return_val = secp256k1_ec_pubkey_serialize(
-        ctx, compressed_pubkey, &len, &pubkey, SECP256K1_EC_COMPRESSED);
-    assert(return_val);
+    assert(secp256k1_ec_pubkey_serialize(ctx, compressed_pubkey, &len, &pubkey,
+                                         SECP256K1_EC_COMPRESSED));
     assert(len == sizeof(compressed_pubkey));
 
-    size_t i;
     std::stringstream ss;
     for (size_t i = 0; i < sizeof(compressed_pubkey); i++) {
         ss << std::setfill('0') << std::right << std::setw(2)

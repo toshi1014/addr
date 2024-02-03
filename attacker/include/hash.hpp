@@ -27,7 +27,7 @@ const char* keccak(const char*);
 using namespace boost::multiprecision;
 
 template <typename... Args>
-std::string format(const std::string& fmt, Args... args) {
+const std::string format(const std::string& fmt, Args... args) {
     size_t len = std::snprintf(nullptr, 0, fmt.c_str(), args...);
     std::vector<char> buf(len + 1);
     std::snprintf(&buf[0], len + 1, fmt.c_str(), args...);
@@ -36,28 +36,33 @@ std::string format(const std::string& fmt, Args... args) {
 
 collections::HexArrayPtr sha256(const char* char_arr, const size_t size);
 collections::HexArrayPtr hexSha256(const collections::HexArray&);
-std::string hex2bin_char(const char&);
-std::string hex2bin(const std::string&);
-uint32_t bin2dec(const std::string&);
+
+const std::string hex2bin_char(const char&);
+const std::string hex2bin(const std::string&);
+const uint32_t bin2dec(const std::string&);
+
 collections::HexArrayPtr PBKDF2_HMAC_SHA_512(const char*, const char*,
                                              const int32_t, const uint32_t);
+
 collections::HexArrayPtr hmac(const char*, const size_t, const char*,
                               const size_t, const EVP_MD*, const unsigned int);
 collections::HexArrayPtr hexHmac(const collections::HexArray&,
                                  const std::string&, const EVP_MD*,
                                  const unsigned int);
-
 collections::HexArrayPtr hexHmacHexKey(const collections::HexArray&,
                                        const collections::HexArray&,
                                        const EVP_MD*, const unsigned int);
 template <typename T>
-T hex2dec(const std::string&);
+const T hex2dec(const std::string&);
+
 template <typename T>
-std::string dec2hex(const T);
-std::string dec2hex_naive(const uint32_t);
-std::string hexRipemd160(const collections::HexArray&);
-std::string sha3_256(const char*, const size_t);
-std::string hex_sha3_256(const std::string&);
+const std::string dec2hex(const T);
+
+const std::string dec2hex_naive(const uint32_t);
+
+const std::string hexRipemd160(const collections::HexArray&);
+const std::string sha3_256(const char*, const size_t);
+const std::string hex_sha3_256(const std::string&);
 
 }  // namespace hash
 
