@@ -4,7 +4,7 @@
 
 namespace hdkey {
 
-HDKey::HDKey(uint512_t key, std::string chain_code, uint32_t depth,
+HDKey::HDKey(uint512_t key, collections::HexArray chain_code, uint32_t depth,
              Encoding encoding, std::string prefix)
     : key(key),
       chain_code(chain_code),
@@ -19,16 +19,19 @@ const std::string HDKey::get_key_hex() const {
     return ss.str();
 };
 
-HDKey HDKey::from_seed(const std::string& seed, const Encoding& encoding,
-                       const std::string& prefix) {
+HDKey HDKey::from_seed(const collections::HexArray& seed_hexarr,
+                       const Encoding& encoding, const std::string& prefix) {
     const std::string key = "Bitcoin seed";
     const EVP_MD* hash_func = EVP_sha512();
 
-    std::string I = hash::hexHmac(seed, key, hash_func, SHA512_DIGEST_LENGTH);
+    std::string I =
+        hash::hexHmac(seed_hexarr, key, hash_func, SHA512_DIGEST_LENGTH)
+            ->to_str();
     std::string Il = I.substr(0, SHA512_DIGEST_LENGTH);
     std::string Ir = I.substr(SHA512_DIGEST_LENGTH, SHA512_DIGEST_LENGTH);
 
-    return HDKey(hash::hex2dec<uint512_t>(Il), Ir, 0, encoding, prefix);
+    return HDKey(hash::hex2dec<uint512_t>(Il),
+                 collections::HexArray::from_str(Ir), 0, encoding, prefix);
 }
 
 HDKey HDKey::child_private(HDKey& hdkey, uint32_t index, bool hardened) {
@@ -43,17 +46,21 @@ HDKey HDKey::child_private(HDKey& hdkey, uint32_t index, bool hardened) {
         seed = pubkey.compressed() + hash::dec2hex_naive(index) + "0000000";
     }
 
+    collections::HexArray seed_hexarr = collections::HexArray::from_str(seed);
+
     // hmac
     const EVP_MD* hash_func = EVP_sha512();
-    const std::string I = hash::hexHmacHexKey(seed, hdkey.chain_code, hash_func,
-                                              SHA512_DIGEST_LENGTH);
+    const std::string I = hash::hexHmacHexKey(seed_hexarr, hdkey.chain_code,
+                                              hash_func, SHA512_DIGEST_LENGTH)
+                              ->to_str();
     const std::string Il = I.substr(0, SHA512_DIGEST_LENGTH);
     const std::string Ir = I.substr(SHA512_DIGEST_LENGTH, SHA512_DIGEST_LENGTH);
 
     const uint512_t child_key =
         (hash::hex2dec<uint512_t>(Il) + hdkey.key) % CURVE_N;
 
-    return HDKey(child_key, Ir, hdkey.depth + 1, hdkey.encoding, hdkey.prefix);
+    return HDKey(child_key, collections::HexArray::from_str(Ir),
+                 hdkey.depth + 1, hdkey.encoding, hdkey.prefix);
 }
 
 HDKey HDKey::subkey(HDKey& hdkey, std::string path) {
@@ -66,7 +73,7 @@ HDKey HDKey::subkey(HDKey& hdkey, std::string path) {
     return HDKey::child_private(hdkey, stoi(path), hardened);
 }
 
-std::string HDKey::seed2addr(const std::string& seed) {
+std::string HDKey::seed2addr(const collections::HexArray& seed_hexarr) {
     // Network network = BtcLegacy;
     Network network = Eth;
 
@@ -94,7 +101,7 @@ std::string HDKey::seed2addr(const std::string& seed) {
         throw std::invalid_argument("bad network");
     }
 
-    HDKey hdkey = HDKey::from_seed(seed, encoding, prefix);
+    HDKey hdkey = HDKey::from_seed(seed_hexarr, encoding, prefix);
 
     for (const std::string& path : fullpath) hdkey = HDKey::subkey(hdkey, path);
 

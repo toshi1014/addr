@@ -8,6 +8,7 @@
 #include <variant>
 #include <vector>
 
+#include "collections.hpp"
 #include "hash.hpp"
 #include "public_key.hpp"
 
@@ -27,20 +28,20 @@ const uint512_t CURVE_N(
 class HDKey {
    private:
     uint512_t key;
-    std::string chain_code;
+    collections::HexArray chain_code;
     uint32_t depth;
     Encoding encoding;
     std::string prefix;
 
    public:
-    HDKey(uint512_t, std::string, uint32_t, Encoding, std::string);
+    HDKey(uint512_t, collections::HexArray, uint32_t, Encoding, std::string);
     const std::string get_key_hex() const;
 
-    static HDKey from_seed(const std::string&, const Encoding&,
+    static HDKey from_seed(const collections::HexArray&, const Encoding&,
                            const std::string&);
     static HDKey child_private(HDKey&, uint32_t, bool);
     static HDKey subkey(HDKey&, std::string);
-    static std::string seed2addr(const std::string&);
+    static std::string seed2addr(const collections::HexArray&);
 
     // COMBAK:
     const uint512_t get_key() const { return key; };

@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "bip39.hpp"
+#include "collections.hpp"
 #include "db.hpp"
 #include "hash.hpp"
 #include "hdkey.hpp"
@@ -24,19 +25,19 @@ const auto config = utils::read_json(CONFIG_FILEPATH);
 
 std::string entropy2addr(const uint128_t entropy, bool verbose) {
     const std::string mnemonic = bip39::generate_mnemonic(entropy);
-    const std::string seed = bip39::mnemonic2seed(mnemonic);
-    const std::string addr = hdkey::HDKey::seed2addr(seed);
+    collections::HexArrayPtr seed_hexarr = bip39::mnemonic2seed(mnemonic);
+    const std::string addr = hdkey::HDKey::seed2addr(*seed_hexarr);
 
     if (verbose) {
-        std::cout << "Mnemonic: " << mnemonic << std::endl;
-        std::cout << "Seed:\t" << seed << std::endl;
+        std::cout << "Mnemonic:\t" << mnemonic << std::endl;
+        std::cout << "Seed:\t" << seed_hexarr->to_str() << std::endl;
         std::cout << "Addr:\t" << addr << "\n" << std::endl;
     }
     return addr;
 }
 
 std::string entropy2addr(const std::string entropy_hex, bool verbose) {
-    if (verbose) std::cout << "Entropy: " << entropy_hex << std::endl;
+    if (verbose) std::cout << "Entropy:\t" << entropy_hex << std::endl;
 
     const uint128_t entropy = hash::hex2dec<uint128_t>(entropy_hex);
     return entropy2addr(entropy, verbose);
@@ -63,6 +64,7 @@ void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
     // std::string strLim = "340282366920938463463374607431768211455";
     const std::string strLim = "10000";
+    const uint32_t interval{1000};
     const uint128_t lim(strLim);
     db::DBSqlite db{};
 
@@ -70,7 +72,7 @@ void bruteforce(const uint32_t strength) {
     func_gen_entropy = *bip39::entropy::CSPRNG;
 
     double clock = utils::clock();
-    std::cout << "Loop\tDelta (sec)" << std::endl;
+    std::cout << "Loop\titer/sec" << std::endl;
 
     for (uint32_t i = 0; i < lim; i++) {
         const uint128_t entropy = func_gen_entropy(i);
@@ -80,10 +82,10 @@ void bruteforce(const uint32_t strength) {
             found(entropy);
         }
 
-        if (i % 1000 == 0) {
+        if (i % interval == 0) {
             ping(db);
             double clock_tmp = utils::clock();
-            std::cout << i << "\t" << (clock_tmp - clock) / 1000 
+            std::cout << i << "\t" << interval / ((clock_tmp - clock) / 1000)
                       << std::endl;
             clock = clock_tmp;
         }
@@ -106,7 +108,7 @@ int main() {
     // const std::string entropy_hex = "b0e8160f51929bf718a3f28ddc15cf27";
     // const std::string expected_addr =
     //     "0x1ca21071b051df5901614be2a085cc0d655c7c6d";
-    // assert(entropy2addr(entropy_hex) == expected_addr);
+    // assert(entropy2addr(entropy_hex, /*verbose*/ true) == expected_addr);
 
     // test();
 }

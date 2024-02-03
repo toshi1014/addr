@@ -14,6 +14,8 @@
 #include <sstream>
 #include <vector>
 
+#include "collections.hpp"
+
 namespace hash {
 
 extern "C" {
@@ -32,26 +34,28 @@ std::string format(const std::string& fmt, Args... args) {
     return std::string(&buf[0], &buf[0] + len);
 }
 
-void getHexStr(char*, const std::string&);
-std::string sha256(const char*, const size_t);
-std::string hexSha256(const std::string&);
+collections::HexArrayPtr sha256(const char* char_arr, const size_t size);
+collections::HexArrayPtr hexSha256(const collections::HexArray&);
 std::string hex2bin_char(const char&);
 std::string hex2bin(const std::string&);
 uint32_t bin2dec(const std::string&);
-std::string PBKDF2_HMAC_SHA_512(const char*, const char*, const int32_t,
-                                const uint32_t);
-std::string hmac(const char*, const size_t, const char*, const size_t,
-                 const EVP_MD*, const unsigned int);
-std::string hexHmac(const std::string&, const std::string&, const EVP_MD*,
-                    const unsigned int);
-std::string hexHmacHexKey(const std::string&, const std::string&, const EVP_MD*,
-                          const unsigned int);
+collections::HexArrayPtr PBKDF2_HMAC_SHA_512(const char*, const char*,
+                                             const int32_t, const uint32_t);
+collections::HexArrayPtr hmac(const char*, const size_t, const char*,
+                              const size_t, const EVP_MD*, const unsigned int);
+collections::HexArrayPtr hexHmac(const collections::HexArray&,
+                                 const std::string&, const EVP_MD*,
+                                 const unsigned int);
+
+collections::HexArrayPtr hexHmacHexKey(const collections::HexArray&,
+                                       const collections::HexArray&,
+                                       const EVP_MD*, const unsigned int);
 template <typename T>
 T hex2dec(const std::string&);
 template <typename T>
 std::string dec2hex(const T);
 std::string dec2hex_naive(const uint32_t);
-std::string hexRipemd160(const std::string&);
+std::string hexRipemd160(const collections::HexArray&);
 std::string sha3_256(const char*, const size_t);
 std::string hex_sha3_256(const std::string&);
 

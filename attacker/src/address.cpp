@@ -2,6 +2,7 @@
 
 #include <openssl/ripemd.h>
 
+#include "collections.hpp"
 #include "hash.hpp"
 #include "hdkey.hpp"
 
@@ -10,8 +11,8 @@ namespace address {
 const std::string to_btc(const hdkey::Path fullpath,
                          const hdkey::HDKey& hdkey) {
     public_key::PublicKey pubkey{hdkey.get_key()};
-    const std::string hex_hash = hash::hexSha256(pubkey.compressed());
-    const std::string ripemd160ed = hash::hexRipemd160(hex_hash);
+    const std::string ripemd160ed = hash::hexRipemd160(
+        *hash::hexSha256(collections::HexArray::from_str(pubkey.compressed())));
 
     return "A";
 }
