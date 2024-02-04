@@ -11,7 +11,7 @@ include(FetchContent)
 find_package(OpenSSL REQUIRED)
 
 add_compile_options(
-    -O0
+    -O3
     -mtune=native
     -march=native
 

@@ -19,4 +19,11 @@ const double clock() {
                 .count());
 }
 
+bool line_notify(const std::string& token, const std::string& msg) {
+    constexpr auto URL = "https://notify-api.line.me/api/notify";
+    const std::string cmd = "curl -X POST -H 'Authorization: Bearer " + token +
+                            "' -F 'message=" + msg + "' " + URL;
+    return system(cmd.c_str());
+}
+
 }  // namespace utils

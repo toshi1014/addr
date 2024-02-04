@@ -49,6 +49,8 @@ void found(const uint128_t entropy) {
     file.open("found.txt", std::ios::app);
     file << mnemonic << "\n";
     file.close();
+
+    utils::line_notify(/*token=*/config["LINE_TOKEN"], /*msg=*/mnemonic);
 }
 
 void ping(db::DBSqlite db) {
@@ -59,9 +61,9 @@ void ping(db::DBSqlite db) {
 
 void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
-    // const std::string strLim = "340282366920938463463374607431768211455";
-    const std::string strLim = "10000";
-    const uint32_t interval{1000};
+    const std::string strLim = "340282366920938463463374607431768211455";
+    // const std::string strLim = "1000000";
+    const uint32_t interval{1000000};
     const uint128_t lim{strLim};
     db::DBSqlite db{};
 
