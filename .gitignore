@@ -2,7 +2,8 @@ env?
 __pycache__
 memo.md
 found.txt
-addr_list*.tsv
+addr_list*.?sv
+eth_addr_csv/
 *.db
 *.tmp
 build
