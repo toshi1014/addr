@@ -12,8 +12,8 @@ class DB:
     tbl_segwit = "tbl_segwit"
     tbl_eth = "tbl_eth"
     col_addr = "address"
-    dividend_length = 2000
     dirname_tbl_idx = "table_index"
+    dividend_length = 1000
 
     def __init__(self):
         self.conn = None
@@ -24,59 +24,60 @@ class DB:
             os.makedirs(DB.dirname_tbl_idx)
 
     @classmethod
-    def setup_btc(cls, src_filename, ping_data, engine=None):
-        db = cls()
-        params_to_sql = {
-            "con": engine if engine else db.conn,
+    def get_params_to_sql(cls, conn, engine):
+        return {
+            "con": engine if engine else conn,
             "if_exists": "append",
             "index": False,
             "method": "multi",
             "chunksize": 10*4,
         }
 
-        size_legacy, size_segwit = cls.insert_all(
-            src_filename, ping_data, params_to_sql
-        )
-        # size_legacy, size_segwit = 22961294,16410460
+    @classmethod
+    def setup_btc(cls, src_filename, ping_data, engine=None, force=True):
+        db = cls()
+        if force:
+            params_to_sql = cls.get_params_to_sql(db.conn_all, engine)
 
+            size_legacy, size_segwit = cls.insert_all(
+                src_filename, ping_data, params_to_sql
+            )
+        else:
+            size_legacy, size_segwit = 22961294,16410460
+
+        params_to_sql = cls.get_params_to_sql(db.conn, engine)
         cls.divide_tbl(db, cls.tbl_legacy, size_legacy, params_to_sql)
         cls.divide_tbl(db, cls.tbl_segwit, size_segwit, params_to_sql)
 
         print("\nBTC setup complete")
 
     @classmethod
-    def setup_eth(cls, src_filename, ping_data, engine=None):
+    def setup_eth(cls, src_filename, ping_data, engine=None, force=True):
         db = cls()
-        params_to_sql = {
-            "con": engine if engine else db.conn,
-            "if_exists": "append",
-            "index": False,
-            "method": "multi",
-            "chunksize": 10*4,
-        }
-
-        cls.insert(
-            df=pd.DataFrame({"address": ping_data["addr_eth"]}),
-            tbl_name=cls.tbl_eth,
-            params_to_sql=params_to_sql,
-        )
-
         with open(src_filename, mode="r", encoding="utf-8") as f:
             lines = sum(1 for _ in f)
-        reader = pd.read_csv(
-            src_filename,
-            iterator=True,
-            chunksize=CHUNKSIZE,
-            header=None,
-        )
 
-        for df in tqdm(reader, total=lines // CHUNKSIZE):
-            df = df.dropna().rename(columns={1: "address"})[["address"]]
+        if force:
+            params_to_sql = cls.get_params_to_sql(db.conn_all, engine)
             cls.insert(
-                df=df.map(lambda x: x.lower()),        # lower
+                df=pd.DataFrame({"address": ping_data["addr_eth"]}),
                 tbl_name=cls.tbl_eth,
                 params_to_sql=params_to_sql,
             )
+
+            reader = pd.read_csv(
+                src_filename,
+                iterator=True,
+                chunksize=CHUNKSIZE,
+                header=None,
+            )
+            for df in tqdm(reader, total=lines // CHUNKSIZE):
+                df = df.dropna().rename(columns={1: "address"})[["address"]]
+                cls.insert(
+                    df=df.map(lambda x: x.lower()),        # lower
+                    tbl_name=cls.tbl_eth,
+                    params_to_sql=params_to_sql,
+                )
 
         print(
             "\nStats\n"
@@ -84,6 +85,7 @@ class DB:
             f"  hit:\t{lines/(2**128)}\n"
         )
 
+        params_to_sql = cls.get_params_to_sql(db.conn, engine)
         cls.divide_tbl(db, cls.tbl_eth, lines, params_to_sql)
 
         print("ETH setup complete")
@@ -162,14 +164,14 @@ class DB:
         size_per_tbl = size // cls.dividend_length
         assert size_per_tbl > cls.dividend_length, "too much table"
 
-        cur = db.conn.cursor()
+        cur_all = db.conn_all.cursor()
         print(f"Dividing {tbl_name_all}...")
-        cur.execute(
+        cur_all.execute(
             f"SELECT * FROM {tbl_name_all} ORDER BY {cls.col_addr}{cls.sql_order};")
 
         tbl_index = []
         for i in tqdm(range(cls.dividend_length + 1)):
-            rows = cur.fetchmany(size_per_tbl)
+            rows = cur_all.fetchmany(size_per_tbl)
             df = pd.DataFrame({"address": [row[0] for row in rows]})
             cls.insert(
                 df=df,
@@ -180,7 +182,7 @@ class DB:
             # memo the end as index
             tbl_index.append(df.iloc[len(df)-1]["address"])
 
-        assert len(cur.fetchall()) == 0
+        assert len(cur_all.fetchall()) == 0
 
         # save indices
         with open(f"{cls.dirname_tbl_idx}/{tbl_name_all}.json.tmp", "w", encoding="utf-8") as f:

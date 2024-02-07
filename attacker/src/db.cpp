@@ -18,6 +18,7 @@ const std::string DBSqlite::get_tbl_name(const std::string &addr) const {
         }
         i++;
     }
+    if (this->eth_idx.size() == i) i--;
     return "tbl_eth" + std::to_string(i);
 }
 
