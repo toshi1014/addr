@@ -1,4 +1,5 @@
 import json
+import os
 import pandas as pd
 from tqdm import tqdm
 
@@ -11,12 +12,16 @@ class DB:
     tbl_segwit = "tbl_segwit"
     tbl_eth = "tbl_eth"
     col_addr = "address"
-    dividend_length = 1000
+    dividend_length = 2000
+    dirname_tbl_idx = "table_index"
 
     def __init__(self):
         self.conn = None
         self.cur = None
         self.col_addr = DB.col_addr
+
+        if not os.path.exists(DB.dirname_tbl_idx):
+            os.makedirs(DB.dirname_tbl_idx)
 
     @classmethod
     def setup_btc(cls, src_filename, ping_data, engine=None):
@@ -50,22 +55,38 @@ class DB:
             "chunksize": 10*4,
         }
 
-        df = pd.read_csv(src_filename)
-        df_ping = pd.DataFrame({
-            "address": ping_data["addr_eth"]
-        })
-        df = pd.concat([df[["address"]], df_ping], axis=0)
-        df = df.map(lambda x: x.lower())        # lower
-
         cls.insert(
-            df=df,
+            df=pd.DataFrame({"address": ping_data["addr_eth"]}),
             tbl_name=cls.tbl_eth,
             params_to_sql=params_to_sql,
         )
 
-        cls.divide_tbl(db, cls.tbl_eth, len(df), params_to_sql)
+        with open(src_filename, mode="r", encoding="utf-8") as f:
+            lines = sum(1 for _ in f)
+        reader = pd.read_csv(
+            src_filename,
+            iterator=True,
+            chunksize=CHUNKSIZE,
+            header=None,
+        )
 
-        print("\nETH setup complete")
+        for df in tqdm(reader, total=lines // CHUNKSIZE):
+            df = df.dropna().rename(columns={1: "address"})[["address"]]
+            cls.insert(
+                df=df.map(lambda x: x.lower()),        # lower
+                tbl_name=cls.tbl_eth,
+                params_to_sql=params_to_sql,
+            )
+
+        print(
+            "\nStats\n"
+            f"  size:\t{lines}\n"
+            f"  hit:\t{lines/(2**128)}\n"
+        )
+
+        cls.divide_tbl(db, cls.tbl_eth, lines, params_to_sql)
+
+        print("ETH setup complete")
 
     @classmethod
     def insert_all(cls, src_filename, ping_data, params_to_sql):
@@ -138,11 +159,13 @@ class DB:
 
     @classmethod
     def divide_tbl(cls, db, tbl_name_all, size, params_to_sql):
+        size_per_tbl = size // cls.dividend_length
+        assert size_per_tbl > cls.dividend_length, "too much table"
+
         cur = db.conn.cursor()
         print(f"Dividing {tbl_name_all}...")
         cur.execute(
             f"SELECT * FROM {tbl_name_all} ORDER BY {cls.col_addr}{cls.sql_order};")
-        size_per_tbl = size // cls.dividend_length
 
         tbl_index = []
         for i in tqdm(range(cls.dividend_length + 1)):
@@ -160,15 +183,15 @@ class DB:
         assert len(cur.fetchall()) == 0
 
         # save indices
-        with open(f"{tbl_name_all}.json.tmp", "w", encoding="utf-8") as f:
+        with open(f"{cls.dirname_tbl_idx}/{tbl_name_all}.json.tmp", "w", encoding="utf-8") as f:
             f.write(json.dumps(tbl_index))
 
     def prepare_index(self):
-        with open("tbl_legacy.json.tmp", "r", encoding="utf-8") as f:
+        with open(f"{DB.dirname_tbl_idx}/tbl_legacy.json.tmp", "r", encoding="utf-8") as f:
             self.idx_tbl_legacy = json.loads(f.read())
-        with open("tbl_segwit.json.tmp", "r", encoding="utf-8") as f:
+        with open(f"{DB.dirname_tbl_idx}/tbl_segwit.json.tmp", "r", encoding="utf-8") as f:
             self.idx_tbl_segwit = json.loads(f.read())
-        with open("tbl_eth.json.tmp", "r", encoding="utf-8") as f:
+        with open(f"{DB.dirname_tbl_idx}/tbl_eth.json.tmp", "r", encoding="utf-8") as f:
             self.idx_tbl_eth = json.loads(f.read())
 
     def get_tbl_name(self, addr):

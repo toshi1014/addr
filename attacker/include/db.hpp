@@ -15,7 +15,7 @@ static int callback(void *, int, char **, char **);
 class DBSqlite {
    private:
     sqlite3 *db = NULL;
-    int ret = sqlite3_open("./out2.db", &db);
+    int ret = sqlite3_open("./out.db", &db);
     int count = 0;
 
     std::vector<std::string> eth_idx;

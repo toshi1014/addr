@@ -1,7 +1,7 @@
 {
-    "SRC_FILENAME_BTC!": "addr_list.short.tsv",
-    "SRC_FILENAME_BTC": "addr_list.tsv",
-    "SRC_FILENAME_ETH": "addr_list.eth.csv",
+    "SRC_FILENAME_BTC": "addr_csv/addr_list.tsv",
+    "SRC_FILENAME_ETH": "addr_csv/addr_list.eth.csv",
+    "SRC_FILENAME_ETH!": "addr_csv/addr_list.eth.short.csv",
     "DB_TYPE": "sqlite",
     "DB_TYPE!": "postgres",
     "PING_DATA": {
@@ -26,8 +26,8 @@
         ],
         "addr_eth": [
             "0x1ca21071b051df5901614be2a085cc0d655c7c6d",
-            "0x77Bd3DCC32d478d1e8c62923982967c8c8681de5",
-            "0x31023E2bAB61A7E740a1E88D0426af4e8a35be01",
+            "0x77bd3dcc32d478d1e8c62923982967c8c8681de5",
+            "0x31023e2bab61a7e740a1e88d0426af4e8a35be01",
             "0xb0561f4dd964368f70631935d50f5bdab73a8904",
             "0xb8e8c96f11db5dd8c0dbad1717d6b8d47160cc3f"
         ]

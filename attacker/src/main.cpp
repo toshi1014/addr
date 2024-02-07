@@ -63,7 +63,7 @@ void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
     const std::string strLim = "340282366920938463463374607431768211455";
     // const std::string strLim = "1000000";
-    const uint32_t interval{1000000};
+    const uint32_t interval{1000};
     const uint128_t lim{strLim};
     db::DBSqlite db{};
 

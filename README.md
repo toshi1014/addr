@@ -8,9 +8,10 @@
 
 ## Setup
 
-1. `$ pip3 install -r pyattacker/requirements.txt`
-2. `$ python3 pyattacker/list_address.py`
-3. `$ make init_db`
+1. Get all funded addresses
+2. `$ pip3 install -r pyattacker/requirements.txt`
+3. `$ python3 pyattacker/list_address.py`
+4. `$ make init_db`
 
 ## Usage
 

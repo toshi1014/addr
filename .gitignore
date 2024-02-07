@@ -3,7 +3,8 @@ __pycache__
 memo.md
 found.txt
 addr_list*.?sv
-eth_addr_csv/
+addr_csv/
 *.db
 *.tmp
 build
+table_index
