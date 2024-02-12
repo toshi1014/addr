@@ -1,3 +1,5 @@
+#include <omp.h>
+
 #include <boost/multiprecision/cpp_int.hpp>
 #include <cassert>
 #include <cmath>
@@ -61,32 +63,38 @@ void ping(db::DBSqlite db) {
 
 void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
-    const std::string strLim = "340282366920938463463374607431768211455";
-    // const std::string strLim = "1000000";
-    constexpr uint32_t interval{1000};
-    const uint128_t lim{strLim};
-    db::DBSqlite db{};
+    // const std::string strLim = "340282366920938463463374607431768211455";
+    constexpr uint32_t interval{10000};
+    const std::string strLim = "100000";
 
+    // const uint128_t lim{strLim};
+    const uint32_t lim{static_cast<uint32_t>(stoi(strLim))};
+
+    db::DBSqlite db{};
     uint128_t (*func_gen_entropy)(uint32_t);
     func_gen_entropy = *bip39::entropy::CSPRNG;
 
-    double clock = utils::clock();
-    std::cout << "Loop\titer/sec" << std::endl;
+    std::cout << "Time\titer/sec" << std::endl;
+    double start = omp_get_wtime();
+    size_t ping_cnt{0};
 
-    for (uint32_t i = 0; i < lim; i++) {
-        const uint128_t entropy = func_gen_entropy(i);
-        const std::string addr = entropy2addr(entropy, /*verbose=*/false);
+#pragma omp parallel
+    {
+#pragma omp for
+        for (uint32_t i = 0; i < lim; i++) {
+            const uint128_t entropy = func_gen_entropy(i);
+            const std::string addr = entropy2addr(entropy, /*verbose=*/false);
 
-        if (db.has_balance(addr)) {
-            found(entropy);
-        }
+            if (db.has_balance(addr)) found(entropy);
 
-        if (i % interval == 0) {
-            ping(db);
-            double clock_tmp = utils::clock();
-            std::cout << i << "\t" << interval / ((clock_tmp - clock) / 1000)
-                      << std::endl;
-            clock = clock_tmp;
+            if (i % interval == 0) {
+                ping(db);
+
+                double delta = omp_get_wtime() - start;
+                std::cout << (uint32_t)delta << "\t"
+                          << interval * ping_cnt / delta << std::endl;
+                ping_cnt++;
+            }
         }
     }
 }
