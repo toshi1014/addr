@@ -8,6 +8,11 @@
 
 namespace db {
 
+// FIXME: db dir
+const std::string DB_DIR = "./db_8k";
+
+const std::string db_filepath = DB_DIR + "/out.db";
+
 static bool found{false};
 
 static int callback(void *, int, char **, char **);
@@ -15,7 +20,7 @@ static int callback(void *, int, char **, char **);
 class DBSqlite {
    private:
     sqlite3 *db = NULL;
-    int ret = sqlite3_open("./out.db", &db);
+    int ret = sqlite3_open(db_filepath.c_str(), &db);
     int count = 0;
 
     std::vector<std::string> eth_idx;

@@ -4,7 +4,9 @@ import pandas as pd
 from tqdm import tqdm
 
 
+# FIXME: param
 CHUNKSIZE = 10**5
+SAVE_DIR = "db"
 
 
 class DB:
@@ -12,16 +14,21 @@ class DB:
     tbl_segwit = "tbl_segwit"
     tbl_eth = "tbl_eth"
     col_addr = "address"
-    dirname_tbl_idx = "table_index"
-    dividend_length = 1000
+
+    dividend_length = 8000
+    #  tbl size   itr/sec
+    #  5000 000   600
+    # 10000 000   420
+    # 16000 000   400
+    # 80000 000   100
 
     def __init__(self):
         self.conn = None
         self.cur = None
         self.col_addr = DB.col_addr
 
-        if not os.path.exists(DB.dirname_tbl_idx):
-            os.makedirs(DB.dirname_tbl_idx)
+        if not os.path.exists(SAVE_DIR):
+            os.makedirs(SAVE_DIR)
 
     @classmethod
     def get_params_to_sql(cls, conn, engine):
@@ -43,7 +50,7 @@ class DB:
                 src_filename, ping_data, params_to_sql
             )
         else:
-            size_legacy, size_segwit = 22961294,16410460
+            size_legacy, size_segwit = 22961294, 16410460
 
         params_to_sql = cls.get_params_to_sql(db.conn, engine)
         cls.divide_tbl(db, cls.tbl_legacy, size_legacy, params_to_sql)
@@ -185,15 +192,15 @@ class DB:
         assert len(cur_all.fetchall()) == 0
 
         # save indices
-        with open(f"{cls.dirname_tbl_idx}/{tbl_name_all}.json.tmp", "w", encoding="utf-8") as f:
+        with open(f"{SAVE_DIR}/{tbl_name_all}.json", "w", encoding="utf-8") as f:
             f.write(json.dumps(tbl_index))
 
     def prepare_index(self):
-        with open(f"{DB.dirname_tbl_idx}/tbl_legacy.json.tmp", "r", encoding="utf-8") as f:
-            self.idx_tbl_legacy = json.loads(f.read())
-        with open(f"{DB.dirname_tbl_idx}/tbl_segwit.json.tmp", "r", encoding="utf-8") as f:
-            self.idx_tbl_segwit = json.loads(f.read())
-        with open(f"{DB.dirname_tbl_idx}/tbl_eth.json.tmp", "r", encoding="utf-8") as f:
+        # with open(f"{SAVE_DIR}/tbl_legacy.json", "r", encoding="utf-8") as f:
+        #     self.idx_tbl_legacy = json.loads(f.read())
+        # with open(f"{SAVE_DIR}/tbl_segwit.json", "r", encoding="utf-8") as f:
+        #     self.idx_tbl_segwit = json.loads(f.read())
+        with open(f"{SAVE_DIR}/tbl_eth.json", "r", encoding="utf-8") as f:
             self.idx_tbl_eth = json.loads(f.read())
 
     def get_tbl_name(self, addr):

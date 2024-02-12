@@ -44,7 +44,7 @@ bool DBSqlite::has_balance(const std::string &addr) {
 DBSqlite::DBSqlite() {
     using nlohmann::json;
 
-    const std::string ETH_IDX_FILEPATH = "table_index/tbl_eth.json.tmp";
+    const std::string ETH_IDX_FILEPATH = DB_DIR + "/tbl_eth.json";
 
     std::ifstream test_file(ETH_IDX_FILEPATH);
     json test_cases;

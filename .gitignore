@@ -1,10 +1,7 @@
 env?
 __pycache__
-memo.md
 found.txt
-addr_list*.?sv
 addr_csv/
-*.db*
-*.tmp
+*.db.all
 build
-table_index
+db_*
