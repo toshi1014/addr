@@ -13,10 +13,13 @@ class DBSqlite(db_base.DB):
 
     def __init__(self):
         super().__init__()
-        self.conn_all = sqlite3.connect(DB_FILENAME + ".all")
+        self.db_filename_all = DB_FILENAME + ".all"
+        self.db_filename = db_base.SAVE_DIR + "/" + DB_FILENAME
+
+        self.conn_all = sqlite3.connect(self.db_filename_all)
         self.cur_all = self.conn_all.cursor()
 
-        self.conn = sqlite3.connect(db_base.SAVE_DIR + "/" + DB_FILENAME)
+        self.conn = sqlite3.connect(self.db_filename)
         self.cur = self.conn.cursor()
 
     @classmethod
@@ -29,7 +32,13 @@ class DBSqlite(db_base.DB):
             shutil.rmtree(db_base.SAVE_DIR)
 
         # super().setup_btc(filename_btc, ping_data, force=FORCE)
-        super().setup_eth(filename_eth, ping_data, force=FORCE)
+        super().setup_eth(
+            filename_eth,
+            # "addr_csv/small.csv",
+            # "addr_csv/out5.eth.csv",
+            ping_data,
+            force=FORCE,
+        )
 
         print("\nSetup complete")
 

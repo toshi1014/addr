@@ -5,6 +5,8 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <thread>
 
 #include "bip39.hpp"
 #include "collections.hpp"
@@ -64,8 +66,8 @@ void ping(db::DBSqlite db) {
 void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
     // const std::string strLim = "340282366920938463463374607431768211455";
-    constexpr uint32_t interval{10000};
-    const std::string strLim = "100000";
+    constexpr uint32_t interval{9000};
+    const std::string strLim = "100000000";
 
     // const uint128_t lim{strLim};
     const uint32_t lim{static_cast<uint32_t>(stoi(strLim))};
@@ -74,29 +76,48 @@ void bruteforce(const uint32_t strength) {
     uint128_t (*func_gen_entropy)(uint32_t);
     func_gen_entropy = *bip39::entropy::CSPRNG;
 
-    std::cout << "Time\titer/sec" << std::endl;
-    double start = omp_get_wtime();
+    std::cout << "Time\tStatus\t\titer/sec" << std::endl;
+    double start_time = omp_get_wtime();
     size_t ping_cnt{0};
+    std::map<uint128_t, std::string> addr_pool;
 
-#pragma omp parallel
+// #pragma omp parallel
     {
-#pragma omp for
-        for (uint32_t i = 0; i < lim; i++) {
+// #pragma omp for
+        for (uint32_t i = 0; i <= lim; i++) {
             const uint128_t entropy = func_gen_entropy(i);
             const std::string addr = entropy2addr(entropy, /*verbose=*/false);
 
             if (db.has_balance(addr)) found(entropy);
+            // addr_pool.insert({entropy, addr});
 
+            // once in a while,
             if (i % interval == 0) {
+                utils::show_status(start_time, "searching...", NULL);
+
+                std::vector<std::thread> threads;
+
+                // 1. has_balance
+                for (const auto& pair : addr_pool)
+                    threads.emplace_back(db::has_balance_x<uint128_t>,
+                                         std::ref(db),
+                                         /*entropy=*/pair.first,
+                                         /*addr=*/pair.second,
+                                         /*callback_found=*/found);
+                for (auto& thread : threads) thread.join();
+                addr_pool.clear();
+
+                // 2. ping
                 ping(db);
 
-                double delta = omp_get_wtime() - start;
-                std::cout << (uint32_t)delta << "\t"
-                          << interval * ping_cnt / delta << std::endl;
+                // 3. show iter/sec
+                utils::show_status(start_time, "interval", interval * ping_cnt);
                 ping_cnt++;
             }
         }
     }
+
+    utils::show_status(start_time, "finish\t", interval * ping_cnt);
 }
 
 void test() {

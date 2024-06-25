@@ -3,19 +3,17 @@
 
 #include <sqlite3.h>
 
+#include <cstdint>
+#include <functional>
 #include <iostream>
 #include <vector>
 
 namespace db {
 
 // FIXME: db dir
-const std::string DB_DIR = "./db_8k";
+const std::string DB_DIR = "./db";
 
 const std::string db_filepath = DB_DIR + "/out.db";
-
-static bool found{false};
-
-static int callback(void *, int, char **, char **);
 
 class DBSqlite {
    private:
@@ -30,6 +28,16 @@ class DBSqlite {
     bool has_balance(const std::string &);
     DBSqlite();
 };
+
+template <typename T>
+void has_balance_x(DBSqlite &db_instance, const T entropy,
+                   const std::string &addr,
+                   std::function<void(const T aa)> callback_found) {
+    if (db_instance.has_balance(addr)) callback_found(entropy);
+}
+
+const std::vector<uint8_t> fn_compress(const std::string &);
+
 }  // namespace db
 
 #endif

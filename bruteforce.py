@@ -13,8 +13,8 @@ def has_balance(mnemonic, db, func_bool=any):
     rtn = [
         db.find(pyattacker.HDKey.seed2address(seed, network))
         for network in [
-            "btc-legacy",
-            "btc-segwit",
+            # "btc-legacy",
+            # "btc-segwit",
             "eth",
         ]
     ]

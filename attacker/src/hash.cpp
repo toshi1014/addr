@@ -206,4 +206,17 @@ const std::string sha3_256(const char* char_arr, const size_t size) {
 //     return sha3_256(hexStr, str.length() / 2);
 // }
 
+const uint64_t fnv1a(const collections::HexArray &hexarr) {
+    const uint64_t FNV_prime = 0x100000001b3;
+    const uint64_t FNV_offset_basis = 0xcbf29ce484222325;
+    uint64_t hash_value = FNV_offset_basis;
+    for (size_t i = 0; i < hexarr.get_size() / 2; ++i) {
+        hash_value ^= hexarr.get_byte()[i];
+        hash_value *= FNV_prime;
+        hash_value &= 0xffffffffffffffff;  // 64-bit hash
+    }
+    return hash_value;
+}
+
+
 }  // namespace hash

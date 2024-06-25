@@ -64,6 +64,8 @@ const std::string hexRipemd160(const collections::HexArray&);
 const std::string sha3_256(const char*, const size_t);
 const std::string hex_sha3_256(const std::string&);
 
+const uint64_t fnv1a(const collections::HexArray&);
+
 }  // namespace hash
 
 #endif

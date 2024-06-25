@@ -26,4 +26,11 @@ bool line_notify(const std::string& token, const std::string& msg) {
     return system(cmd.c_str());
 }
 
+void show_status(double start_time, const std::string& status,
+                 const uint32_t num) {
+    double delta = omp_get_wtime() - start_time;
+    std::cout << (uint32_t)delta << "\t" << status << "\t"
+              << (num == 0 ? "" : std::to_string(num / delta)) << std::endl;
+}
+
 }  // namespace utils
