@@ -10,9 +10,9 @@
 
 namespace db {
 
-// FIXME: db dir
 const std::string DB_DIR = "./db";
 
+// FIXME: db name
 const std::string db_filepath = DB_DIR + "/out.db";
 
 class DBSqlite {
