@@ -1,7 +1,6 @@
 #include "db.hpp"
 
 #include <fstream>
-#include <nlohmann/json.hpp>
 
 #include "collections.hpp"
 #include "hash.hpp"
@@ -9,15 +8,8 @@
 namespace db {
 
 const std::string DBSqlite::get_tbl_name(const std::string &addr) const {
-    size_t i = 0;
-    for (const auto &a : this->eth_idx) {
-        if (strcmp(addr.c_str(), a.c_str()) < 0) {
-            break;
-        }
-        i++;
-    }
-    if (this->eth_idx.size() == i) i--;
-    return "tbl_eth" + std::to_string(i);
+    return "tbl_eth" +
+           std::to_string(hash::hex2dec<uint8_t>(addr.substr(addr.size() - 1)));
 }
 
 bool DBSqlite::has_balance(const std::string &addr) {
@@ -42,16 +34,13 @@ bool DBSqlite::has_balance(const std::string &addr) {
 }
 
 DBSqlite::DBSqlite() {
-    using nlohmann::json;
-
-    const std::string ETH_IDX_FILEPATH = DB_DIR + "/tbl_eth.json";
-
-    std::ifstream test_file(ETH_IDX_FILEPATH);
-    json test_cases;
-    test_file >> test_cases;
-
-    for (const auto &val : test_cases) {
-        this->eth_idx.push_back(val.get<std::string>());
+    // optimize
+    for (auto &opt : optimizes) {
+        ret = sqlite3_exec(db, opt, 0, 0, nullptr);
+        if (ret != SQLITE_OK) {
+            std::cerr << "SQL error during optimization" << std::endl;
+            break;
+        }
     }
 }
 

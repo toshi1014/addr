@@ -22,6 +22,17 @@ class DBSqlite(db_base.DB):
         self.conn = sqlite3.connect(self.db_filename)
         self.cur = self.conn.cursor()
 
+        optimizes = [
+            "PRAGMA journal_mode = OFF;",
+            "PRAGMA synchronous = OFF;",
+            "PRAGMA temp_store = MEMORY;",
+            "PRAGMA cache_size = -64000;",
+            "PRAGMA mmap_size = 268435456;",
+            "PRAGMA optimize;",
+        ]
+        for opt in optimizes:
+            self.conn.execute(opt)
+
     @classmethod
     def setup(cls, filename_btc, filename_eth, ping_data):
         if FORCE:
@@ -35,7 +46,6 @@ class DBSqlite(db_base.DB):
         super().setup_eth(
             filename_eth,
             # "addr_csv/small.csv",
-            # "addr_csv/out5.eth.csv",
             ping_data,
             force=FORCE,
         )

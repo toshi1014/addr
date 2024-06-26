@@ -81,9 +81,9 @@ void bruteforce(const uint32_t strength) {
     size_t ping_cnt{0};
     std::map<uint128_t, std::string> addr_pool;
 
-// #pragma omp parallel
+    // #pragma omp parallel
     {
-// #pragma omp for
+        // #pragma omp for
         for (uint32_t i = 0; i <= lim; i++) {
             const uint128_t entropy = func_gen_entropy(i);
             const std::string addr = entropy2addr(entropy, /*verbose=*/false);

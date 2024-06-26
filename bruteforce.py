@@ -82,7 +82,6 @@ def main():
     else:
         raise ValueError(config["DB_TYPE"])
 
-    db.prepare_index()
     run(strength=128, db=db)
 
 

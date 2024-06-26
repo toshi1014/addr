@@ -34,7 +34,7 @@ class DB:
     tbl_eth = "tbl_eth"
     col_addr = "address"
 
-    dividend_length = 8000
+    dividend_length = 16  # 000
     #  tbl size   itr/sec
     #  5000 000   600
     # 10000 000   420
@@ -50,23 +50,21 @@ class DB:
             os.makedirs(SAVE_DIR)
 
     @classmethod
-    def get_params_to_sql(cls, db_filename, tbl_name):
-        def init_engine(db_filename, tbl_name):
+    def get_params_to_sql(cls, *args, **kwargs):
+        def init_engine(db_filename, tbl_name, index):
             engine = sqlalchemy.create_engine(f"sqlite:///{db_filename}")
             metadata = sqlalchemy.MetaData()
             table = sqlalchemy.Table(
                 tbl_name,
                 metadata,
                 sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
-                sqlalchemy.Column("address", sqlalchemy.BLOB,
-                                  #   index=True
-                                  ),
+                sqlalchemy.Column("address", sqlalchemy.BLOB, index=index),
             )
             metadata.create_all(engine)
             return engine
 
         return {
-            "con": init_engine(db_filename, tbl_name),
+            "con": init_engine(*args, **kwargs),
             "if_exists": "append",
             "index": False,
             "method": "multi",
@@ -91,7 +89,8 @@ class DB:
     def setup_eth(cls, src_filename, ping_data, force=True):
         db = cls()
         with open(src_filename, mode="r", encoding="utf-8") as f:
-            lines = sum(1 for _ in f)
+            lines = sum(1 for _ in f if _.strip() != "")
+        lines -= 1  # remove header
 
         if force:
             cls.insert(
@@ -120,13 +119,13 @@ class DB:
             f"  hit:\t{lines/(2**128)}\n"
         )
 
-        cls.divide_tbl(db, cls.tbl_eth, lines)
+        cls.divide_tbl(db, cls.tbl_eth, lines + len(ping_data["addr_eth"]))
 
         print("ETH setup complete")
 
     @classmethod
-    def insert(cls, df, db_filename, tbl_name, compress=False):
-        params_to_sql = cls.get_params_to_sql(db_filename, tbl_name)
+    def insert(cls, df, db_filename, tbl_name, compress=False, index=False):
+        params_to_sql = cls.get_params_to_sql(db_filename, tbl_name, index)
 
         if compress:
             df[cls.col_addr] = df[cls.col_addr].apply(lambda x: fn_compress(x))
@@ -207,75 +206,66 @@ class DB:
 
         cur_all = db.conn_all.cursor()
         print(f"Dividing {tbl_name_all}...")
-        cur_all.execute(
-            f"SELECT * FROM {tbl_name_all} ORDER BY {cls.col_addr}{cls.sql_order};")
 
-        tbl_index = []
-        for i in tqdm(range(cls.dividend_length + 1)):
-            rows = cur_all.fetchmany(size_per_tbl)
+        sum_record = 0
+        # WHERE {cls.col_addr} % {cls.dividend_length} == {i}
+        for i in tqdm(range(cls.dividend_length)):
+            cmd = f"""
+                SELECT * FROM {tbl_name_all}
+                WHERE CASE
+                    WHEN substr(address, -1) = '0' THEN 0
+                    WHEN substr(address, -1) = '1' THEN 1
+                    WHEN substr(address, -1) = '2' THEN 2
+                    WHEN substr(address, -1) = '3' THEN 3
+                    WHEN substr(address, -1) = '4' THEN 4
+                    WHEN substr(address, -1) = '5' THEN 5
+                    WHEN substr(address, -1) = '6' THEN 6
+                    WHEN substr(address, -1) = '7' THEN 7
+                    WHEN substr(address, -1) = '8' THEN 8
+                    WHEN substr(address, -1) = '9' THEN 9
+                    WHEN substr(address, -1) = 'a' THEN 10
+                    WHEN substr(address, -1) = 'b' THEN 11
+                    WHEN substr(address, -1) = 'c' THEN 12
+                    WHEN substr(address, -1) = 'd' THEN 13
+                    WHEN substr(address, -1) = 'e' THEN 14
+                    WHEN substr(address, -1) = 'f' THEN 15
+                    ELSE -1
+                END = {i}
+                ORDER BY {cls.col_addr}{cls.sql_order};
+            """
+
+            cur_all.execute(cmd)
+            rows = cur_all.fetchall()
             df = pd.DataFrame({"address": [row[1] for row in rows]})
+
+            is_valid = df.address.apply(
+                lambda addr: (int(addr, 16) % cls.dividend_length) == i
+            )
+            assert cls.dividend_length == 16
+            assert is_valid.all(), "dividing_tbl err"
+
+            sum_record += len(df)
+
             cls.insert(
                 df=df.copy(),
                 db_filename=db.db_filename,
                 tbl_name=cls.format_tbl_name(tbl_name_all, i),
                 compress=True,
+                index=True,
             )
 
-            # memo the end as index
-            tbl_index.append(df.iloc[len(df)-1]["address"])
-
-        assert len(cur_all.fetchall()) == 0
-
-        # save indices
-        with open(f"{SAVE_DIR}/{tbl_name_all}.json", "w", encoding="utf-8") as f:
-            f.write(json.dumps(tbl_index))
-
-    @ classmethod
-    def divide_tbl1(cls, db, tbl_name_all, size):
-        size_per_tbl = size // cls.dividend_length
-        assert size_per_tbl > cls.dividend_length, "too much table"
-
-        cur_all = db.conn_all.cursor()
-        print(f"Dividing {tbl_name_all}...")
-
-        for i in tqdm(range(cls.dividend_length)):
-            print(i)
-            cur_all.execute(
-                f"""
-                SELECT * FROM {tbl_name_all}
-                WHERE {cls.col_addr} % {cls.dividend_length} == {i}
-                ORDER BY {cls.col_addr}{cls.sql_order};
-            """)
-
-            rows = cur_all.fetchall()
-            df = pd.DataFrame({"address": [row[0] for row in rows]})
-            cls.insert(
-                df=df.copy(),
-                db_filename=db.db_filename,
-                tbl_name=cls.format_tbl_name(tbl_name_all, i),
-            )
-
-    def prepare_index(self):
-        # with open(f"{SAVE_DIR}/tbl_legacy.json", "r", encoding="utf-8") as f:
-        #     self.idx_tbl_legacy = json.loads(f.read())
-        # with open(f"{SAVE_DIR}/tbl_segwit.json", "r", encoding="utf-8") as f:
-        #     self.idx_tbl_segwit = json.loads(f.read())
-        with open(f"{SAVE_DIR}/tbl_eth.json", "r", encoding="utf-8") as f:
-            self.idx_tbl_eth = json.loads(f.read())
+        assert size == sum_record, f"dividing_tbl err\t{size} != {sum_record}"
 
     def get_tbl_name(self, addr):
         if addr[:2] == "0x":
-            idx_tbl_xxx, tbl_name = self.idx_tbl_eth, DB.tbl_eth
+            tbl_name = DB.tbl_eth
         elif addr[0] == "1":
-            idx_tbl_xxx, tbl_name = self.idx_tbl_legacy, DB.tbl_legacy
+            tbl_name = DB.tbl_legacy
         else:
-            idx_tbl_xxx, tbl_name = self.idx_tbl_segwit, DB.tbl_segwit
+            tbl_name = DB.tbl_segwit
 
-        for i, idx in enumerate(idx_tbl_xxx):
-            if idx > addr:
-                return DB.format_tbl_name(tbl_name, i)
-        # i = addr % self.dividend_length
-
+        address_int = int(addr[-1], 16)
+        i = address_int % self.dividend_length
         return DB.format_tbl_name(tbl_name, i)
 
     def search(self, addr):

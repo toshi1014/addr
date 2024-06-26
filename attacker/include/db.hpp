@@ -18,10 +18,14 @@ const std::string db_filepath = DB_DIR + "/out.db";
 class DBSqlite {
    private:
     sqlite3 *db = NULL;
+    static constexpr const char *optimizes[] = {
+        "PRAGMA journal_mode = OFF;",    "PRAGMA synchronous = OFF;",
+        "PRAGMA temp_store = MEMORY;",   "PRAGMA cache_size = -64000;",
+        "PRAGMA mmap_size = 268435456;", "PRAGMA optimize;"};
+
     int ret = sqlite3_open(db_filepath.c_str(), &db);
     int count = 0;
 
-    std::vector<std::string> eth_idx;
     const std::string get_tbl_name(const std::string &) const;
 
    public:

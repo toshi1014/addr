@@ -133,6 +133,7 @@ const T hex2dec(const std::string& hex) {
                               std::pow(16, size - i - 1));
     return out;
 }
+template const uint8_t hex2dec<uint8_t>(const std::string&);
 template const int32_t hex2dec<int32_t>(const std::string&);
 template const uint128_t hex2dec<uint128_t>(const std::string&);
 template const uint512_t hex2dec<uint512_t>(const std::string&);
