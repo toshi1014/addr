@@ -33,7 +33,8 @@ class DB:
     tbl_eth = "tbl_eth"
     col_addr = "address"
 
-    dividend_length = 16  # 000
+    TBL_LAST_DIGITS = 3
+    dividend_length = 16**TBL_LAST_DIGITS
     #  tbl size   itr/sec
     #  5000 000   600
     # 10000 000   420
@@ -200,47 +201,24 @@ class DB:
 
     @ classmethod
     def divide_tbl(cls, db, tbl_name_all, size):
-        size_per_tbl = size // cls.dividend_length
-        assert size_per_tbl > cls.dividend_length, "too much table"
-
         cur_all = db.conn_all.cursor()
         print(f"Dividing {tbl_name_all}...")
 
         sum_record = 0
-        # WHERE {cls.col_addr} % {cls.dividend_length} == {i}
         for i in tqdm(range(cls.dividend_length)):
-            cmd = f"""
+            cur_all.execute(
+                f"""
                 SELECT * FROM {tbl_name_all}
-                WHERE CASE
-                    WHEN substr(address, -1) = '0' THEN 0
-                    WHEN substr(address, -1) = '1' THEN 1
-                    WHEN substr(address, -1) = '2' THEN 2
-                    WHEN substr(address, -1) = '3' THEN 3
-                    WHEN substr(address, -1) = '4' THEN 4
-                    WHEN substr(address, -1) = '5' THEN 5
-                    WHEN substr(address, -1) = '6' THEN 6
-                    WHEN substr(address, -1) = '7' THEN 7
-                    WHEN substr(address, -1) = '8' THEN 8
-                    WHEN substr(address, -1) = '9' THEN 9
-                    WHEN substr(address, -1) = 'a' THEN 10
-                    WHEN substr(address, -1) = 'b' THEN 11
-                    WHEN substr(address, -1) = 'c' THEN 12
-                    WHEN substr(address, -1) = 'd' THEN 13
-                    WHEN substr(address, -1) = 'e' THEN 14
-                    WHEN substr(address, -1) = 'f' THEN 15
-                    ELSE -1
-                END = {i}
+                WHERE substr(address, -{cls.TBL_LAST_DIGITS}) = '{hex(i)[2:].zfill(cls.TBL_LAST_DIGITS)}'
                 ORDER BY {cls.col_addr}{cls.sql_order};
-            """
-
-            cur_all.execute(cmd)
+                """
+            )
             rows = cur_all.fetchall()
             df = pd.DataFrame({"address": [row[1] for row in rows]})
 
             is_valid = df.address.apply(
                 lambda addr: (int(addr, 16) % cls.dividend_length) == i
             )
-            assert cls.dividend_length == 16
             assert is_valid.all(), "dividing_tbl err"
 
             sum_record += len(df)
@@ -263,7 +241,7 @@ class DB:
         else:
             tbl_name = DB.tbl_segwit
 
-        address_int = int(addr[-1], 16)
+        address_int = int(addr[(-self.TBL_LAST_DIGITS):], 16)
         i = address_int % self.dividend_length
         return DB.format_tbl_name(tbl_name, i)
 

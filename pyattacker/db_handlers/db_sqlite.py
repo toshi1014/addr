@@ -3,14 +3,15 @@ import sqlite3
 from . import db_base
 
 
-DB_FILENAME = "out"
+DB_FILENAME_ALL = "out"
+DB_FILENAME = "out_three"
 FORCE = False
 
 
 class DBSqlite(db_base.DB):
     sql_order = ""
 
-    db_filename_all = db_base.SAVE_DIR + "/" + DB_FILENAME + ".all.db"
+    db_filename_all = db_base.SAVE_DIR + "/" + DB_FILENAME_ALL + ".all.db"
     db_filename = db_base.SAVE_DIR + "/" + DB_FILENAME + ".db"
 
     def __init__(self):

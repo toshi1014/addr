@@ -8,8 +8,8 @@
 namespace db {
 
 const std::string DBSqlite::get_tbl_name(const std::string &addr) const {
-    return "tbl_eth" +
-           std::to_string(hash::hex2dec<uint8_t>(addr.substr(addr.size() - 1)));
+    return "tbl_eth" + std::to_string(hash::hex2dec<uint32_t>(
+                           addr.substr(addr.size() - TBL_LAST_DIGITS)));
 }
 
 bool DBSqlite::has_balance(const std::string &addr) {

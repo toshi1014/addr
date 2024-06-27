@@ -134,6 +134,7 @@ const T hex2dec(const std::string& hex) {
     return out;
 }
 template const uint8_t hex2dec<uint8_t>(const std::string&);
+template const uint32_t hex2dec<uint32_t>(const std::string&);
 template const int32_t hex2dec<int32_t>(const std::string&);
 template const uint128_t hex2dec<uint128_t>(const std::string&);
 template const uint512_t hex2dec<uint512_t>(const std::string&);
@@ -207,7 +208,7 @@ const std::string sha3_256(const char* char_arr, const size_t size) {
 //     return sha3_256(hexStr, str.length() / 2);
 // }
 
-const uint64_t fnv1a(const collections::HexArray &hexarr) {
+const uint64_t fnv1a(const collections::HexArray& hexarr) {
     const uint64_t FNV_prime = 0x100000001b3;
     const uint64_t FNV_offset_basis = 0xcbf29ce484222325;
     uint64_t hash_value = FNV_offset_basis;
@@ -218,6 +219,5 @@ const uint64_t fnv1a(const collections::HexArray &hexarr) {
     }
     return hash_value;
 }
-
 
 }  // namespace hash
