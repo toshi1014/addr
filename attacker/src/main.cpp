@@ -2,6 +2,7 @@
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -68,6 +69,7 @@ void bruteforce(const uint32_t strength) {
     // const std::string strLim = "340282366920938463463374607431768211455";
     constexpr uint32_t interval{9000};
     const std::string strLim = "100000000";
+    constexpr uint8_t SLEEP_SEC = 1;
 
     // const uint128_t lim{strLim};
     const uint32_t lim{static_cast<uint32_t>(stoi(strLim))};
@@ -81,9 +83,9 @@ void bruteforce(const uint32_t strength) {
     size_t ping_cnt{0};
     std::map<uint128_t, std::string> addr_pool;
 
-    // #pragma omp parallel
+#pragma omp parallel
     {
-        // #pragma omp for
+#pragma omp for
         for (uint32_t i = 0; i <= lim; i++) {
             const uint128_t entropy = func_gen_entropy(i);
             const std::string addr = entropy2addr(entropy, /*verbose=*/false);
@@ -93,19 +95,21 @@ void bruteforce(const uint32_t strength) {
 
             // once in a while,
             if (i % interval == 0) {
-                utils::show_status(start_time, "searching...", NULL);
-
-                std::vector<std::thread> threads;
-
                 // 1. has_balance
-                for (const auto& pair : addr_pool)
-                    threads.emplace_back(db::has_balance_x<uint128_t>,
-                                         std::ref(db),
-                                         /*entropy=*/pair.first,
-                                         /*addr=*/pair.second,
-                                         /*callback_found=*/found);
-                for (auto& thread : threads) thread.join();
-                addr_pool.clear();
+                if (!addr_pool.empty()) {
+                    utils::show_status(start_time, "searching...", NULL);
+
+                    std::vector<std::thread> threads;
+
+                    for (const auto& pair : addr_pool)
+                        threads.emplace_back(db::has_balance_x<uint128_t>,
+                                             std::ref(db),
+                                             /*entropy=*/pair.first,
+                                             /*addr=*/pair.second,
+                                             /*callback_found=*/found);
+                    for (auto& thread : threads) thread.join();
+                    addr_pool.clear();
+                }
 
                 // 2. ping
                 ping(db);
@@ -113,6 +117,8 @@ void bruteforce(const uint32_t strength) {
                 // 3. show iter/sec
                 utils::show_status(start_time, "interval", interval * ping_cnt);
                 ping_cnt++;
+
+                std::this_thread::sleep_for(std::chrono::seconds(SLEEP_SEC));
             }
         }
     }

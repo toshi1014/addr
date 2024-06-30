@@ -12,9 +12,8 @@ namespace db {
 
 const std::string DB_DIR = "./db";
 
-// FIXME: db name
+// FIXME: db
 const std::string db_filepath = DB_DIR + "/out_three.db";
-
 constexpr uint8_t TBL_LAST_DIGITS = 3;
 
 class DBSqlite {

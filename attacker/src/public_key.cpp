@@ -29,7 +29,7 @@ PublicKey::PublicKey(const uint512_t int_seckey) {
             if (s[0] == ' ') {
                 s = s[1];
             }
-            dec = hash::hex2dec<int>(s);
+            dec = hash::hex2dec<uint32_t>(s);
         }
         this->seckey[i] = dec;
     }
