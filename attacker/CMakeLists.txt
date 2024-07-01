@@ -22,6 +22,12 @@ add_compile_options(
     --pedantic-error
 )
 
+# AddressSanitizer
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}e -fsanitize=address -fno-omit-frame-pointer")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+# set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
+
 FILE(GLOB CPP_FILE ${SRC_DIR}/*.cpp)
 
 add_library(
@@ -48,7 +54,6 @@ target_link_libraries(
     mylib
     OpenSSL::Crypto
     sqlite3
-    /usr/local/lib/libsecp256k1.a
     /usr/local/lib/libsecp256k1.a
     ${CMAKE_CURRENT_SOURCE_DIR}/../rusthash/target/release/librusthash.a
     nlohmann_json::nlohmann_json

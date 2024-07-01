@@ -24,13 +24,16 @@ class DBSqlite {
         "PRAGMA temp_store = MEMORY;",   "PRAGMA cache_size = -64000;",
         "PRAGMA mmap_size = 268435456;", "PRAGMA optimize;"};
 
-    int ret = sqlite3_open(db_filepath.c_str(), &db);
+    int ret = 0;
     int count = 0;
 
     const std::string get_tbl_name(const std::string &) const;
+    void check() const;
 
    public:
     bool has_balance(const std::string &);
+    void open();
+    void close();
     DBSqlite();
 };
 

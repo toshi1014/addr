@@ -67,9 +67,8 @@ void ping(db::DBSqlite db) {
 void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
     // const std::string strLim = "340282366920938463463374607431768211455";
-    constexpr uint32_t interval{9000};
+    constexpr uint32_t interval{10000};
     const std::string strLim = "100000000";
-    constexpr uint8_t SLEEP_SEC = 1;
 
     // const uint128_t lim{strLim};
     const uint32_t lim{static_cast<uint32_t>(stoi(strLim))};
@@ -78,14 +77,16 @@ void bruteforce(const uint32_t strength) {
     uint128_t (*func_gen_entropy)(uint32_t);
     func_gen_entropy = *bip39::entropy::CSPRNG;
 
-    std::cout << "Time\tStatus\t\titer/sec" << std::endl;
+    std::cout << "Time\tStatus\t\titer/sec\tMem(KB)" << std::endl;
     double start_time = omp_get_wtime();
     size_t ping_cnt{0};
     std::map<uint128_t, std::string> addr_pool;
 
-#pragma omp parallel
+    db.open();
+
+    // #pragma omp parallel
     {
-#pragma omp for
+        // #pragma omp for
         for (uint32_t i = 0; i <= lim; i++) {
             const uint128_t entropy = func_gen_entropy(i);
             const std::string addr = entropy2addr(entropy, /*verbose=*/false);
@@ -118,7 +119,9 @@ void bruteforce(const uint32_t strength) {
                 utils::show_status(start_time, "interval", interval * ping_cnt);
                 ping_cnt++;
 
-                std::this_thread::sleep_for(std::chrono::seconds(SLEEP_SEC));
+                // NOTE: reset mem leak by sqlite3
+                db.close();
+                db.open();
             }
         }
     }

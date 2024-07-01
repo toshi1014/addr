@@ -29,8 +29,11 @@ const std::string to_eth(const hdkey::Path fullpath,
           << std::setfill('0') << std::right << std::setw(SIZE)
           << pubkey.get_y();  // y
 
-    const std::string hashed = hash::keccak(ss_xy.str().c_str());
-    return "0x" + hashed.substr(IDX_SHA3_TRIM, 100);
+    const char* hashed = hash::keccak(ss_xy.str().c_str());
+    const std::string addr =
+        "0x" + std::string(hashed).substr(IDX_SHA3_TRIM, 100);
+    delete hashed;  // free mem of rust extern
+    return addr;
 }
 
 }  // namespace address

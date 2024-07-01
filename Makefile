@@ -6,7 +6,7 @@ all: attacker/CMakeLists.txt
 	@cmake --build ${BUILD_DIR}
 	@echo "\n\n=== out =========\n"
 	@${BUILD_DIR}/a.out
-	@echo
+	@while true; do ${BUILD_DIR}/a.out; done
 
 
 init_db:

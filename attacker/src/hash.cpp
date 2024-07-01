@@ -83,14 +83,14 @@ const uint32_t bin2dec(const std::string& bin) {
 collections::HexArrayPtr PBKDF2_HMAC_SHA_512(const char* pass, const char* salt,
                                              const int32_t iterations,
                                              const uint32_t hash_size) {
-    unsigned char* digest = new unsigned char[hash_size];
+    std::unique_ptr<unsigned char[]> digest(new unsigned char[hash_size]);
 
     PKCS5_PBKDF2_HMAC(pass, strlen(pass), (const unsigned char*)salt,
                       strlen(salt), iterations, EVP_sha512(), hash_size,
-                      digest);
+                      digest.get());
 
     return collections::HexArrayPtr(
-        new collections::HexArray{digest, hash_size});
+        new collections::HexArray{digest.get(), hash_size});
 }
 
 collections::HexArrayPtr hmac(const char* msg, const size_t msg_size,
