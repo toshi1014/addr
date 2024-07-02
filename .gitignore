@@ -4,4 +4,6 @@ found.txt
 addr_csv/
 *.db.all
 build
-db_*
+db*
+gmon.out
+massif.out*

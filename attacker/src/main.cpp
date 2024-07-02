@@ -16,6 +16,16 @@
 #include "hdkey.hpp"
 #include "utils.hpp"
 
+// param
+#ifdef RELEASE_MODE
+#define INTERVAL 10000
+#define LIM "10000000"  // "340282366920938463463374607431768211455"
+#else
+#define INTERVAL 1000
+#define LIM "10000"
+#endif
+// end param
+
 namespace {
 
 using namespace boost::multiprecision;
@@ -66,9 +76,9 @@ void ping(db::DBSqlite db) {
 
 void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
-    // const std::string strLim = "340282366920938463463374607431768211455";
-    constexpr uint32_t interval{10000};
-    const std::string strLim = "100000000";
+
+    constexpr uint32_t interval{INTERVAL};
+    const std::string strLim{LIM};
 
     // const uint128_t lim{strLim};
     const uint32_t lim{static_cast<uint32_t>(stoi(strLim))};
@@ -84,9 +94,13 @@ void bruteforce(const uint32_t strength) {
 
     db.open();
 
-    // #pragma omp parallel
+#ifdef RELEASE_MODE
+#pragma omp parallel
+#endif
     {
-        // #pragma omp for
+#ifdef RELEASE_MODE
+#pragma omp for
+#endif
         for (uint32_t i = 0; i <= lim; i++) {
             const uint128_t entropy = func_gen_entropy(i);
             const std::string addr = entropy2addr(entropy, /*verbose=*/false);
@@ -118,15 +132,11 @@ void bruteforce(const uint32_t strength) {
                 // 3. show iter/sec
                 utils::show_status(start_time, "interval", interval * ping_cnt);
                 ping_cnt++;
-
-                // NOTE: reset mem leak by sqlite3
-                db.close();
-                db.open();
             }
         }
     }
 
-    utils::show_status(start_time, "finish\t", interval * ping_cnt);
+    utils::show_status(start_time, "finish\t", interval * (ping_cnt - 1));
 }
 
 void test() {
