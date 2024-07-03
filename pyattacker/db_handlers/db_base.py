@@ -103,7 +103,6 @@ class DB:
                 src_filename,
                 iterator=True,
                 chunksize=CHUNKSIZE,
-                header=None,
             )
             for df in tqdm(reader, total=lines // CHUNKSIZE):
                 df = df.dropna().rename(columns={1: "address"})[["address"]]

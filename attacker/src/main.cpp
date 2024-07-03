@@ -85,7 +85,7 @@ void bruteforce(const uint32_t strength) {
     db::DBSqlite db{};
     db.open();
 
-    std::cout << "Time\tStatus\t\titer/sec\tMem(KB)" << std::endl;
+    std::cout << "Time\tStatus\t\titer/sec\tMem(KB)\t\tEntropy" << std::endl;
     double start_time = omp_get_wtime();
     size_t ping_cnt{0};
     constexpr uint32_t interval{INTERVAL};
@@ -110,7 +110,7 @@ void bruteforce(const uint32_t strength) {
             if (i % interval == 0) {
                 // 1. has_balance
                 if (!addr_pool.empty()) {
-                    utils::show_status(start_time, "searching...", NULL);
+                    utils::show_status(start_time, "searching...", NULL, NULL);
 
                     std::vector<std::thread> threads;
 
@@ -128,13 +128,15 @@ void bruteforce(const uint32_t strength) {
                 ping(db);
 
                 // 3. show iter/sec
-                utils::show_status(start_time, "interval", interval * ping_cnt);
+                utils::show_status(start_time, "interval", interval * ping_cnt,
+                                   entropy.str());
                 ping_cnt++;
             }
         }
     }
 
-    utils::show_status(start_time, "finish\t", interval * (ping_cnt - 1));
+    utils::show_status(start_time, "finish\t", interval * (ping_cnt - 1),
+                       std::to_string(LIM));
 }
 
 void test() {

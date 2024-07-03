@@ -35,11 +35,11 @@ size_t getMemoryUsage() {
 }
 
 void show_status(double start_time, const std::string& status,
-                 const uint32_t num) {
+                 const uint32_t num, const std::string& entropy) {
     double delta = omp_get_wtime() - start_time;
     std::cout << (uint32_t)delta << "\t" << status << "\t"
               << std::to_string(num / delta) << "\t" << getMemoryUsage()
-              << std::endl;
+              << "\t\t" << entropy << std::endl;
 }
 
 }  // namespace utils
