@@ -9,9 +9,9 @@ const char DELIMITER = ' ';
 
 namespace entropy {
 
-uint128_t increment(const uint32_t i) { return 1111; }
+uint128_t increment(const uint128_t i) { return i; }
 
-uint128_t CSPRNG(const uint32_t i) {
+uint128_t CSPRNG(const uint128_t i) {
     uint128_t tmp;
 
     getrandom(&tmp, sizeof(uint128_t), GRND_NONBLOCK);
@@ -22,7 +22,7 @@ uint128_t CSPRNG(const uint32_t i) {
 
 const std::string generate_mnemonic(const uint128_t entropy) {
     std::stringstream entropy_hex;
-    entropy_hex << std::hex << entropy;
+    entropy_hex << std::setw(32) << std::setfill('0') << std::hex << entropy;
 
     collections::HexArray entropy_hexarr =
         collections::HexArray::from_str(entropy_hex.str());

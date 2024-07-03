@@ -17,12 +17,13 @@
 #include "utils.hpp"
 
 // param
+constexpr uint8_t INITIAL_ENTROPY = 7;
 #ifdef RELEASE_MODE
-#define INTERVAL 10000
-#define LIM "10000000"  // "340282366920938463463374607431768211455"
+#define INTERVAL 1000000
+#define LIM 1000000000  // 340282366920938463463374607431768211455
 #else
 #define INTERVAL 1000
-#define LIM "10000"
+#define LIM 10000
 #endif
 // end param
 
@@ -57,12 +58,12 @@ const std::string entropy2addr(const std::string entropy_hex, bool verbose) {
 
 void found(const uint128_t entropy) {
     const std::string mnemonic = bip39::generate_mnemonic(entropy);
-    std::cout << mnemonic << std::endl;
+    std::cout << entropy << ": " << mnemonic << std::endl;
 
     // file write
     std::ofstream file;
     file.open("found.txt", std::ios::app);
-    file << mnemonic << "\n";
+    file << entropy << ": " << mnemonic << "\n";
     file.close();
 
     utils::line_notify(/*token=*/config["LINE_TOKEN"], /*msg=*/mnemonic);
@@ -77,22 +78,19 @@ void ping(db::DBSqlite db) {
 void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
 
-    constexpr uint32_t interval{INTERVAL};
-    const std::string strLim{LIM};
-
-    // const uint128_t lim{strLim};
-    const uint32_t lim{static_cast<uint32_t>(stoi(strLim))};
+    uint128_t (*func_gen_entropy)(uint128_t);
+    // func_gen_entropy = *bip39::entropy::CSPRNG;
+    func_gen_entropy = *bip39::entropy::increment;
 
     db::DBSqlite db{};
-    uint128_t (*func_gen_entropy)(uint32_t);
-    func_gen_entropy = *bip39::entropy::CSPRNG;
+    db.open();
 
     std::cout << "Time\tStatus\t\titer/sec\tMem(KB)" << std::endl;
     double start_time = omp_get_wtime();
     size_t ping_cnt{0};
+    constexpr uint32_t interval{INTERVAL};
+    const __uint128_t lim{LIM};
     std::map<uint128_t, std::string> addr_pool;
-
-    db.open();
 
 #ifdef RELEASE_MODE
 #pragma omp parallel
@@ -101,7 +99,7 @@ void bruteforce(const uint32_t strength) {
 #ifdef RELEASE_MODE
 #pragma omp for
 #endif
-        for (uint32_t i = 0; i <= lim; i++) {
+        for (__uint128_t i = INITIAL_ENTROPY; i <= lim; i++) {
             const uint128_t entropy = func_gen_entropy(i);
             const std::string addr = entropy2addr(entropy, /*verbose=*/false);
 

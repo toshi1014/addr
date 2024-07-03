@@ -16,8 +16,8 @@ const uint32_t ITER_PBKDF2_HMAC = 2048;
 const uint32_t SIZE_PBKDF2_HMAC = 64;
 
 namespace entropy {
-uint128_t increment(const uint32_t);
-uint128_t CSPRNG(const uint32_t);
+uint128_t increment(const uint128_t);
+uint128_t CSPRNG(const uint128_t);
 // uint32_t PRNG(uint32_t strength);
 }  // namespace entropy
 
