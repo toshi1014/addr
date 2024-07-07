@@ -16,8 +16,12 @@
 #include "hdkey.hpp"
 #include "utils.hpp"
 
+namespace {
+
+using namespace boost::multiprecision;
+
 // param
-constexpr uint8_t INITIAL_ENTROPY = 7;
+const uint128_t INITIAL_ENTROPY{"800000000000000000000000000000000000000"};
 #ifdef RELEASE_MODE
 #define INTERVAL 1000000
 #define LIM 1000000000  // 340282366920938463463374607431768211455
@@ -25,11 +29,9 @@ constexpr uint8_t INITIAL_ENTROPY = 7;
 #define INTERVAL 1000
 #define LIM 10000
 #endif
+const bool VERBOSE_BRUTEFORCE = false;
 // end param
 
-namespace {
-
-using namespace boost::multiprecision;
 using nlohmann::json;
 constexpr char TEST_FILEPATH[] = "test/bip39.json";
 constexpr char CONFIG_FILEPATH[] = "config.json";
@@ -79,8 +81,14 @@ void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
 
     uint128_t (*func_gen_entropy)(uint128_t);
-    // func_gen_entropy = *bip39::entropy::CSPRNG;
-    func_gen_entropy = *bip39::entropy::increment;
+    func_gen_entropy =
+#ifdef ENTROPY_RANDOM
+        *bip39::entropy::CSPRNG;
+#elif defined(ENTROPY_INCREMENT)
+        *bip39::entropy::increment;
+#else
+        NULL;
+#endif
 
     db::DBSqlite db{};
     db.open();
@@ -89,8 +97,8 @@ void bruteforce(const uint32_t strength) {
     double start_time = omp_get_wtime();
     size_t ping_cnt{0};
     constexpr uint32_t interval{INTERVAL};
-    const __uint128_t lim{LIM};
     std::map<uint128_t, std::string> addr_pool;
+    uint128_t entropy = INITIAL_ENTROPY;
 
 #ifdef RELEASE_MODE
 #pragma omp parallel
@@ -99,9 +107,9 @@ void bruteforce(const uint32_t strength) {
 #ifdef RELEASE_MODE
 #pragma omp for
 #endif
-        for (__uint128_t i = INITIAL_ENTROPY; i <= lim; i++) {
-            const uint128_t entropy = func_gen_entropy(i);
-            const std::string addr = entropy2addr(entropy, /*verbose=*/false);
+        for (size_t i = 0; i <= LIM; i++) {
+            entropy = func_gen_entropy(entropy);
+            const std::string addr = entropy2addr(entropy, VERBOSE_BRUTEFORCE);
 
             if (db.has_balance(addr)) found(entropy);
             // addr_pool.insert({entropy, addr});
@@ -152,6 +160,25 @@ void test() {
 }  // namespace
 
 int main() {
+    // show info
+    std::stringstream ss;
+#ifdef RELEASE_MODE
+    ss << "[RELEASE_MODE]\n";
+#endif
+    ss << "Entropy: ";
+#ifdef ENTROPY_RANDOM
+    ss << "random\n";
+#elif defined(ENTROPY_INCREMENT)
+    ss << "increment (from " << INITIAL_ENTROPY << ")\n";
+#else
+    std::cerr << "Bad entropy type" << std::endl;
+    exit(1);
+#endif
+    ss << "Limit:\t " << LIM << "\n";
+
+    std::cout << ss.str() << std::endl;
+    // end show info
+
     bruteforce(128);
 
     // const std::string entropy_hex = "b0e8160f51929bf718a3f28ddc15cf27";

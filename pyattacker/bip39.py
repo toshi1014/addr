@@ -24,6 +24,7 @@ def gen_entropy(strength):
 
 
 def generate_mnemonic(entropy):
+    entropy = entropy.zfill(32)
     entropy_bin = binascii.unhexlify(entropy)
     DELIMITER = " "
 

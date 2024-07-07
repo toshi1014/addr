@@ -9,7 +9,7 @@ const char DELIMITER = ' ';
 
 namespace entropy {
 
-uint128_t increment(const uint128_t i) { return i; }
+uint128_t increment(const uint128_t i) { return i + 1; }
 
 uint128_t CSPRNG(const uint128_t i) {
     uint128_t tmp;

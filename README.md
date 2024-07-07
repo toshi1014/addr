@@ -17,5 +17,8 @@
 
 ## Usage
 
-* cpp: `$ make`
+* cpp:
+  * random: `$ make release`
+  * increment: - `ENTROPY_TYPE=increment`
+
 * py: `$ python3 bruteforce.py`
