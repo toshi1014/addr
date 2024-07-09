@@ -4,8 +4,9 @@ from . import db_base
 
 
 DB_FILENAME_ALL = "out"
-DB_FILENAME = "out_three"
+DB_FILENAME = "out_four"
 FORCE = False
+TBL_LAST_DIGITS = 4
 
 
 class DBSqlite(db_base.DB):
@@ -15,7 +16,7 @@ class DBSqlite(db_base.DB):
     db_filename = db_base.SAVE_DIR + "/" + DB_FILENAME + ".db"
 
     def __init__(self):
-        super().__init__()
+        super().__init__(TBL_LAST_DIGITS)
 
         self.conn_all = sqlite3.connect(self.db_filename_all)
         self.cur_all = self.conn_all.cursor()
@@ -34,14 +35,13 @@ class DBSqlite(db_base.DB):
         for opt in optimizes:
             self.conn.execute(opt)
 
-    @classmethod
-    def setup(cls, filename_btc, filename_eth, ping_data):
+    def setup(self, filename_btc, filename_eth, ping_data):
         if FORCE:
-            if os.path.exists(cls.db_filename_all):
-                os.remove(cls.db_filename_all)
+            if os.path.exists(self.db_filename_all):
+                os.remove(self.db_filename_all)
 
-        if os.path.exists(cls.db_filename):
-            os.remove(cls.db_filename)
+        if os.path.exists(self.db_filename):
+            os.remove(self.db_filename)
 
         # super().setup_btc(filename_btc, ping_data, force=FORCE)
         super().setup_eth(

@@ -13,7 +13,7 @@ def init_db():
     else:
         raise ValueError(config["DB_TYPE"])
 
-    cls_db.setup(
+    cls_db().setup(
         filename_btc=config["SRC_FILENAME_BTC"],
         filename_eth=config["SRC_FILENAME_ETH"],
         ping_data=config["PING_DATA"],

@@ -33,43 +33,48 @@ class DB:
     tbl_eth = "tbl_eth"
     col_addr = "address"
 
-    TBL_LAST_DIGITS = 3
-    dividend_length = 16**TBL_LAST_DIGITS
     #  tbl size   itr/sec
     #  5000 000   600
     # 10000 000   420
     # 16000 000   400
     # 80000 000   100
 
-    def __init__(self):
+    def __init__(self, tbl_last_digits):
         self.conn = None
         self.cur = None
         self.col_addr = DB.col_addr
+
+        self.tbl_last_digits = tbl_last_digits
+        self.dividend_length = 16**self.tbl_last_digits
 
         if not os.path.exists(SAVE_DIR):
             os.makedirs(SAVE_DIR)
 
     @classmethod
-    def get_params_to_sql(cls, *args, **kwargs):
-        def init_engine(db_filename, tbl_name, index):
-            engine = sqlalchemy.create_engine(f"sqlite:///{db_filename}")
-            metadata = sqlalchemy.MetaData()
+    def get_params_to_sql(cls, engine):
+        return {
+            "con": engine,
+            "if_exists": "append",
+            "index": False,
+            "method": "multi",
+            "chunksize": 10*4,
+        }
+
+    @classmethod
+    def init_engine(cls, db_filename, tbl_names, index):
+        print(f"Init {db_filename}...")
+
+        engine = sqlalchemy.create_engine(f"sqlite:///{db_filename}")
+        metadata = sqlalchemy.MetaData()
+        for tbl_name in tbl_names:
             table = sqlalchemy.Table(
                 tbl_name,
                 metadata,
                 sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
                 sqlalchemy.Column("address", sqlalchemy.BLOB, index=index),
             )
-            metadata.create_all(engine)
-            return engine
-
-        return {
-            "con": init_engine(*args, **kwargs),
-            "if_exists": "append",
-            "index": False,
-            "method": "multi",
-            "chunksize": 10*4,
-        }
+        metadata.create_all(engine)
+        return engine, metadata
 
     @classmethod
     def setup_btc(cls, src_filename, ping_data, force=True):
@@ -85,18 +90,22 @@ class DB:
 
         print("\nBTC setup complete")
 
-    @classmethod
-    def setup_eth(cls, src_filename, ping_data, force=True):
-        db = cls()
+    def setup_eth(self, src_filename, ping_data, force=True):
         with open(src_filename, mode="r", encoding="utf-8") as f:
             lines = sum(1 for _ in f if _.strip() != "")
         lines -= 1  # remove header
 
         if force:
-            cls.insert(
+            engine_all, metadata = self.init_engine(
+                db_filename=self.db_filename_all,
+                tbl_names=[self.tbl_eth],
+                index=False,
+            )
+
+            self.insert(
+                engine=engine_all,
                 df=pd.DataFrame({"address": ping_data["addr_eth"]}).copy(),
-                db_filename=db.db_filename_all,
-                tbl_name=cls.tbl_eth,
+                tbl_name=self.tbl_eth,
             )
 
             reader = pd.read_csv(
@@ -106,11 +115,16 @@ class DB:
             )
             for df in tqdm(reader, total=lines // CHUNKSIZE):
                 df = df.dropna().rename(columns={1: "address"})[["address"]]
-                cls.insert(
+                self.insert(
+                    engine=engine_all,
                     df=df.map(lambda x: x.lower()).copy(),        # lower
-                    db_filename=db.db_filename_all,
-                    tbl_name=cls.tbl_eth,
+                    tbl_name=self.tbl_eth,
                 )
+
+            print("indexing...")
+            tbl_eth = metadata.tables[self.tbl_eth]
+            index = sqlalchemy.Index("idx_address", tbl_eth.c.address)
+            index.create(engine_all)
 
         print(
             "\nStats\n"
@@ -118,13 +132,13 @@ class DB:
             f"  hit:\t{lines/(2**128)}\n"
         )
 
-        cls.divide_tbl(db, cls.tbl_eth, lines + len(ping_data["addr_eth"]))
+        self.divide_tbl(self.tbl_eth, lines + len(ping_data["addr_eth"]))
 
         print("ETH setup complete")
 
     @classmethod
-    def insert(cls, df, db_filename, tbl_name, compress=False, index=False):
-        params_to_sql = cls.get_params_to_sql(db_filename, tbl_name, index)
+    def insert(cls, engine, df, tbl_name, compress=False):
+        params_to_sql = cls.get_params_to_sql(engine)
 
         if compress:
             df[cls.col_addr] = df[cls.col_addr].apply(lambda x: fn_compress(x))
@@ -183,13 +197,13 @@ class DB:
         df_legacy, df_segwit = cls.filter_addr(df)
 
         cls.insert(
+            engine=None,
             df=df_legacy.copy(),
-            db_filename=db_filename,
             tbl_name=cls.tbl_legacy,
         )
         cls.insert(
+            engine=None,
             df=df_segwit.copy(),
-            db_filename=db_filename,
             tbl_name=cls.tbl_segwit,
         )
         return len(df_legacy), len(df_segwit)
@@ -198,36 +212,43 @@ class DB:
     def format_tbl_name(cls, base, idx):
         return f"{base}{str(idx)}"
 
-    @ classmethod
-    def divide_tbl(cls, db, tbl_name_all, size):
-        cur_all = db.conn_all.cursor()
+    def divide_tbl(self, tbl_name_all, size):
+        engine, _ = self.init_engine(
+            db_filename=self.db_filename,
+            tbl_names=[
+                self.format_tbl_name(tbl_name_all, i)
+                for i in range(self.dividend_length)
+            ],
+            index=True,
+        )
+
         print(f"Dividing {tbl_name_all}...")
 
+        cur_all = self.conn_all.cursor()
         sum_record = 0
-        for i in tqdm(range(cls.dividend_length)):
+        for i in tqdm(range(self.dividend_length)):
             cur_all.execute(
                 f"""
                 SELECT * FROM {tbl_name_all}
-                WHERE substr(address, -{cls.TBL_LAST_DIGITS}) = '{hex(i)[2:].zfill(cls.TBL_LAST_DIGITS)}'
-                ORDER BY {cls.col_addr}{cls.sql_order};
+                WHERE substr(address, -{self.tbl_last_digits}) = '{hex(i)[2:].zfill(self.tbl_last_digits)}'
+                ORDER BY {self.col_addr}{self.sql_order};
                 """
             )
             rows = cur_all.fetchall()
             df = pd.DataFrame({"address": [row[1] for row in rows]})
 
             is_valid = df.address.apply(
-                lambda addr: (int(addr, 16) % cls.dividend_length) == i
+                lambda addr: (int(addr, 16) % self.dividend_length) == i
             )
             assert is_valid.all(), "dividing_tbl err"
 
             sum_record += len(df)
 
-            cls.insert(
+            self.insert(
+                engine=engine,
                 df=df.copy(),
-                db_filename=db.db_filename,
-                tbl_name=cls.format_tbl_name(tbl_name_all, i),
+                tbl_name=self.format_tbl_name(tbl_name_all, i),
                 compress=True,
-                index=True,
             )
 
         assert size == sum_record, f"dividing_tbl err\t{size} != {sum_record}"
@@ -240,7 +261,7 @@ class DB:
         else:
             tbl_name = DB.tbl_segwit
 
-        address_int = int(addr[(-self.TBL_LAST_DIGITS):], 16)
+        address_int = int(addr[(-self.tbl_last_digits):], 16)
         i = address_int % self.dividend_length
         return DB.format_tbl_name(tbl_name, i)
 

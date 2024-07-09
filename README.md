@@ -7,13 +7,14 @@
 * Rust
 
 ## Setup
-
-1. Get all funded addresses
-    1. mkdir addr_csv
-    2. add *addr_csv/out?.eth.csv*
+1. `$ bash setup.sh`
 2. `$ pip3 install -r pyattacker/requirements.txt`
-3. `$ bash list_addr.sh`
-4. `$ make init_db`
+3. prepare db
+
+### DB
+1. Get all funded addresses (*addr_csv/out?.eth.csv*)
+4. `$ bash list_addr.sh`
+5. `$ make init_db`
 
 ## Usage
 
