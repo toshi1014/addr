@@ -10,11 +10,12 @@
 
 namespace db {
 
-const std::string DB_DIR = "./db";
-
 // FIXME: db
-const std::string db_filepath = DB_DIR + "/out_three.db";
-constexpr uint8_t TBL_LAST_DIGITS = 3;
+constexpr uint8_t TBL_LAST_DIGITS = 4;
+
+const std::string DB_DIR = "./db";
+const std::string db_filepath =
+    DB_DIR + "/out" + std::to_string(TBL_LAST_DIGITS) + ".db";
 
 class DBSqlite {
    private:

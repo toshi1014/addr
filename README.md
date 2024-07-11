@@ -16,10 +16,23 @@
 4. `$ bash list_addr.sh`
 5. `$ make init_db`
 
+
 ## Usage
 
 * cpp:
   * random: `$ make release`
-  * increment: - `ENTROPY_TYPE=increment`
+  * increment: `$ make release ENTROPY_TYPE=increment`
 
 * py: `$ python3 bruteforce.py`
+
+
+### Docker
+
+* build: `$ docker build -t img-addr . --no-cache --rm`
+
+* run
+  * `$ docker run --rm img-addr`
+
+* run -it
+  1. `$ docker run -it --rm --name cont-addr img-addr bash`
+  2. make release
