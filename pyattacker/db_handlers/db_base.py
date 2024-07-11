@@ -1,7 +1,8 @@
 import os
 import pandas as pd
-from tqdm import tqdm
 import sqlalchemy
+import sqlite3
+from tqdm import tqdm
 
 
 # FIXME: param
@@ -45,7 +46,6 @@ class DB:
         self.col_addr = DB.col_addr
 
         self.tbl_last_digits = tbl_last_digits
-        self.dividend_length = 16**self.tbl_last_digits
 
         if not os.path.exists(SAVE_DIR):
             os.makedirs(SAVE_DIR)
@@ -90,12 +90,12 @@ class DB:
 
         print("\nBTC setup complete")
 
-    def setup_eth(self, src_filename, ping_data, force=True):
+    def setup_eth(self, src_filename, ping_data, force_all=True):
         with open(src_filename, mode="r", encoding="utf-8") as f:
             lines = sum(1 for _ in f if _.strip() != "")
         lines -= 1  # remove header
 
-        if force:
+        if force_all:
             engine_all, metadata = self.init_engine(
                 db_filename=self.db_filename_all,
                 tbl_names=[self.tbl_eth],
@@ -132,7 +132,7 @@ class DB:
             f"  hit:\t{lines/(2**128)}\n"
         )
 
-        self.divide_tbl(self.tbl_eth, lines + len(ping_data["addr_eth"]))
+        self.divide_tbl(lines + len(ping_data["addr_eth"]))
 
         print("ETH setup complete")
 
@@ -180,8 +180,7 @@ class DB:
             f"  size:\t{sum_records}/{lines} (= {sum_records/lines})\n"
             f"  hit:\t{sum_records/(2**128)}\n"
             f"  legacy:segwit = {sum_size_legacy}:{sum_size_segwit}"
-            f" (= {str(sum_size_legacy/sum_records)
-                   [:5]}:{str(sum_size_segwit/sum_records)[:5]})\n"
+            f" (= {str(sum_size_legacy/sum_records)[:5]}:{str(sum_size_segwit/sum_records)[:5]})\n"  # noqa
         )
 
         return sum_size_legacy, sum_size_segwit
@@ -212,46 +211,56 @@ class DB:
     def format_tbl_name(cls, base, idx):
         return f"{base}{str(idx)}"
 
-    def divide_tbl(self, tbl_name_all, size):
-        engine, _ = self.init_engine(
-            db_filename=self.db_filename,
-            tbl_names=[
-                self.format_tbl_name(tbl_name_all, i)
-                for i in range(self.dividend_length)
-            ],
-            index=True,
-        )
+    def divide_tbl(self, size):
+        for digits in range(1, self.tbl_last_digits + 1):
+            dividend_length = 16**digits
+            if digits == 1:
+                db_read = self.db_filename_all
+                cur_read = self.conn_all.cursor()
+            else:
+                db_read = self.db_filename.format(suffix=digits-1)
+                cur_read = sqlite3.connect(db_read).cursor()
 
-        print(f"Dividing {tbl_name_all}...")
-
-        cur_all = self.conn_all.cursor()
-        sum_record = 0
-        for i in tqdm(range(self.dividend_length)):
-            cur_all.execute(
-                f"""
-                SELECT * FROM {tbl_name_all}
-                WHERE substr(address, -{self.tbl_last_digits}) = '{hex(i)[2:].zfill(self.tbl_last_digits)}'
-                ORDER BY {self.col_addr}{self.sql_order};
-                """
-            )
-            rows = cur_all.fetchall()
-            df = pd.DataFrame({"address": [row[1] for row in rows]})
-
-            is_valid = df.address.apply(
-                lambda addr: (int(addr, 16) % self.dividend_length) == i
-            )
-            assert is_valid.all(), "dividing_tbl err"
-
-            sum_record += len(df)
-
-            self.insert(
-                engine=engine,
-                df=df.copy(),
-                tbl_name=self.format_tbl_name(tbl_name_all, i),
-                compress=True,
+            engine, _ = self.init_engine(
+                db_filename=self.db_filename.format(suffix=digits),
+                tbl_names=[
+                    self.format_tbl_name(self.tbl_eth, i)
+                    for i in range(dividend_length)
+                ],
+                index=True,
             )
 
-        assert size == sum_record, f"dividing_tbl err\t{size} != {sum_record}"
+            print(f"Dividing {db_read} into {16**digits}...")
+
+            sum_record = 0
+            for i in tqdm(range(dividend_length)):
+                tbl_read_suf = "" if digits == 1 else i % (
+                    16 ** (digits - 1))
+                cmd = f"""
+                    SELECT * FROM {self.format_tbl_name(self.tbl_eth, tbl_read_suf)}
+                    WHERE substr(address, -{digits}) = '{hex(i)[2:].zfill(digits)}'
+                    ORDER BY {self.col_addr}{self.sql_order};
+                    """
+
+                cur_read.execute(cmd)
+                rows = cur_read.fetchall()
+                df = pd.DataFrame({"address": [row[1] for row in rows]})
+
+                is_valid = df.address.apply(
+                    lambda addr: (int(addr, 16) % dividend_length) == i
+                )
+                assert is_valid.all(), "dividing_tbl err"
+
+                sum_record += len(df)
+
+                self.insert(
+                    engine=engine,
+                    df=df.copy(),
+                    tbl_name=self.format_tbl_name(self.tbl_eth, i),
+                    compress=digits == self.tbl_last_digits,
+                )
+
+            assert size == sum_record, f"size error\t{size} != {sum_record}"
 
     def get_tbl_name(self, addr):
         if addr[:2] == "0x":
@@ -262,7 +271,7 @@ class DB:
             tbl_name = DB.tbl_segwit
 
         address_int = int(addr[(-self.tbl_last_digits):], 16)
-        i = address_int % self.dividend_length
+        i = address_int % (16**self.tbl_last_digits)
         return DB.format_tbl_name(tbl_name, i)
 
     def search(self, addr):

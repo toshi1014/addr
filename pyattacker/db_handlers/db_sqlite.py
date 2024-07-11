@@ -1,19 +1,28 @@
+import glob
 import os
 import sqlite3
 from . import db_base
 
 
+# SRC_FILENAME = "addr_csv/small.csv"
+SRC_FILENAME = "addr_csv/addr_list.eth.csv"
+
 DB_FILENAME_ALL = "out"
-DB_FILENAME = "out_four"
-FORCE = False
+DB_FILENAME = "out"
+FORCE_ALL = False
 TBL_LAST_DIGITS = 4
+
+
+def remove_if_exits(filepath):
+    if os.path.exists(filepath):
+        os.remove(filepath)
 
 
 class DBSqlite(db_base.DB):
     sql_order = ""
 
     db_filename_all = db_base.SAVE_DIR + "/" + DB_FILENAME_ALL + ".all.db"
-    db_filename = db_base.SAVE_DIR + "/" + DB_FILENAME + ".db"
+    db_filename = f"{db_base.SAVE_DIR}/{DB_FILENAME}" + "{suffix}.db"
 
     def __init__(self):
         super().__init__(TBL_LAST_DIGITS)
@@ -21,7 +30,9 @@ class DBSqlite(db_base.DB):
         self.conn_all = sqlite3.connect(self.db_filename_all)
         self.cur_all = self.conn_all.cursor()
 
-        self.conn = sqlite3.connect(self.db_filename)
+        self.conn = sqlite3.connect(
+            self.db_filename.format(suffix=TBL_LAST_DIGITS)
+        )
         self.cur = self.conn.cursor()
 
         optimizes = [
@@ -36,19 +47,17 @@ class DBSqlite(db_base.DB):
             self.conn.execute(opt)
 
     def setup(self, filename_btc, filename_eth, ping_data):
-        if FORCE:
-            if os.path.exists(self.db_filename_all):
-                os.remove(self.db_filename_all)
+        if FORCE_ALL:
+            remove_if_exits(self.db_filename_all)
 
-        if os.path.exists(self.db_filename):
-            os.remove(self.db_filename)
+        for filepath in glob.glob(self.db_filename.format(suffix="?")):
+            remove_if_exits(filepath)
 
         # super().setup_btc(filename_btc, ping_data, force=FORCE)
         super().setup_eth(
-            filename_eth,
-            # "addr_csv/small.csv",
+            SRC_FILENAME,
             ping_data,
-            force=FORCE,
+            force_all=FORCE_ALL,
         )
 
         print("\nSetup complete")
