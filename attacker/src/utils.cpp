@@ -32,9 +32,12 @@ size_t getMemoryUsage() {
 void show_status(double start_time, const std::string& status,
                  const uint32_t num, const std::string& entropy) {
     double delta = omp_get_wtime() - start_time;
-    std::cout << (uint32_t)delta << "\t" << status << "\t"
-              << std::to_string(num / delta) << "\t" << getMemoryUsage()
-              << "\t\t" << entropy << std::endl;
+    std::stringstream ss;
+    ss << (uint32_t)delta << "\t" << status << "\t"
+       << std::to_string(num / delta) << "\t" << getMemoryUsage() << "\t\t";
+    //   << entropy
+
+    update_status_bar(ss.str());
 }
 
 void time_delta(const TimePoint& time_start, const std::string& func_name) {
@@ -57,6 +60,16 @@ void set_priority(int8_t priority) {
         exit(1);
     }
     // std::cout << "Process priority: " << new_priority << std::endl;
+}
+
+void set_cursor_position(uint8_t x, uint8_t y) {
+    std::cout << "\033[" << (int)y << ";" << (int)x << "H";
+}
+
+void update_status_bar(const std::string& message) {
+    set_cursor_position(1, 24);
+    std::cout << "\033[K";
+    std::cout << message << std::flush;
 }
 
 }  // namespace utils

@@ -61,7 +61,7 @@ const std::string entropy2addr(const std::string entropy_hex, bool verbose) {
 
 void found(const uint128_t entropy) {
     const std::string mnemonic = bip39::generate_mnemonic(entropy);
-    std::cout << entropy << ": " << mnemonic << std::endl;
+    std::cout << "\n" << entropy << ": " << mnemonic << std::endl;
 
     // file write
     std::ofstream file;

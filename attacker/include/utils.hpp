@@ -40,6 +40,9 @@ auto deco_time_delta(Func func, const std::string& func_name) {
 
 void set_priority(int8_t);
 
+void set_cursor_position(uint8_t, uint8_t);
+void update_status_bar(const std::string&);
+
 }  // namespace utils
 
 #endif
