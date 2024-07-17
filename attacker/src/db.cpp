@@ -1,9 +1,11 @@
 #include "db.hpp"
 
 #include <fstream>
+#include <random>
 
 #include "collections.hpp"
 #include "hash.hpp"
+#include "utils.hpp"
 
 namespace db {
 
@@ -52,16 +54,34 @@ bool DBSqlite::has_balance(const std::string &addr) {
 }
 
 DBSqlite::DBSqlite() {
+    std::cout << "Init db" << std::endl;
     this->open();
 
     // optimize
-    for (auto &opt : optimizes) {
-        ret = sqlite3_exec(db, opt, 0, 0, nullptr);
-        if (ret != SQLITE_OK) {
-            std::cerr << "SQL error during optimization" << std::endl;
-            break;
-        }
-    }
+    utils::deco_time_delta(
+        [this]() {
+            for (auto &opt : optimizes) {
+                this->ret = sqlite3_exec(this->db, opt, 0, 0, nullptr);
+                this->check();
+            }
+            return 0;
+        },
+        "  * optimizing...")();
+
+    // warm up search speed
+    utils::deco_time_delta(
+        [this]() {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<uint32_t> dis(0, UINT32_MAX);
+
+            for (size_t i = 0; i < 10; i++)
+                this->has_balance(std::to_string(dis(gen)));
+            return 0;
+        },
+        "  * warming up...")();
+
+    std::cout << "\n\n";
 }
 
 const std::vector<uint8_t> fn_compress(const std::string &addr) {

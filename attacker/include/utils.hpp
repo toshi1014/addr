@@ -1,45 +1,45 @@
-#include <sys/resource.h>
+#ifndef UTILS_HPP
+#define UTILS_HPP
 
+#include <omp.h>
+#include <sys/resource.h>
+#include <unistd.h>
+
+#include <chrono>
 #include <fstream>
+#include <iostream>
 #include <nlohmann/json.hpp>
 
 namespace utils {
 
 using nlohmann::json;
+using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
-json read_json(const std::string filepath) {
-    std::ifstream f(filepath);
-    json j;
-    f >> j;
-    return j;
+json read_json(const std::string&);
+
+const double clock();
+
+bool line_notify(const std::string&, const std::string&);
+size_t getMemoryUsage();
+
+void show_status(double, const std::string&, const uint32_t,
+                 const std::string&);
+
+void time_delta(const TimePoint&, const std::string&);
+
+template <typename Func>
+auto deco_time_delta(Func func, const std::string& func_name) {
+    return [func, func_name](auto&&... args) {
+        std::cout << func_name << std::flush;
+        const TimePoint time_start = std::chrono::high_resolution_clock::now();
+        auto result = func(std::forward<decltype(args)>(args)...);
+        time_delta(time_start, "");
+        return result;
+    };
 }
 
-const double clock() {
-    using namespace std::chrono;
-
-    return (duration_cast<milliseconds>(steady_clock::now().time_since_epoch())
-                .count());
-}
-
-bool line_notify(const std::string& token, const std::string& msg) {
-    constexpr auto URL = "https://notify-api.line.me/api/notify";
-    const std::string cmd = "curl -X POST -H 'Authorization: Bearer " + token +
-                            "' -F 'message=" + msg + "' " + URL;
-    return system(cmd.c_str());
-}
-
-size_t getMemoryUsage() {
-    struct rusage usage;
-    getrusage(RUSAGE_SELF, &usage);
-    return usage.ru_maxrss;
-}
-
-void show_status(double start_time, const std::string& status,
-                 const uint32_t num, const std::string& entropy) {
-    double delta = omp_get_wtime() - start_time;
-    std::cout << (uint32_t)delta << "\t" << status << "\t"
-              << std::to_string(num / delta) << "\t" << getMemoryUsage()
-              << "\t\t" << entropy << std::endl;
-}
+void set_priority(int8_t);
 
 }  // namespace utils
+
+#endif

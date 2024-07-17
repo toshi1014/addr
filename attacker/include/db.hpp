@@ -21,9 +21,11 @@ class DBSqlite {
    private:
     sqlite3 *db = NULL;
     static constexpr const char *optimizes[] = {
-        "PRAGMA journal_mode = OFF;",    "PRAGMA synchronous = OFF;",
-        "PRAGMA temp_store = MEMORY;",   "PRAGMA cache_size = -64000;",
-        "PRAGMA mmap_size = 268435456;", "PRAGMA optimize;"};
+        "PRAGMA journal_mode = OFF;", "PRAGMA synchronous = OFF;",
+        "PRAGMA temp_store = MEMORY;",
+        // "PRAGMA cache_size = -64000;",
+        // "PRAGMA mmap_size = 268435456;",
+        "PRAGMA optimize;"};
 
     int ret = 0;
     int count = 0;

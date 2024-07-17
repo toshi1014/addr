@@ -1,5 +1,7 @@
 #include "hash.hpp"
 
+#include "utils.hpp"
+
 namespace hash {
 
 collections::HexArrayPtr sha256(const char* char_arr, const size_t size) {

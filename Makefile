@@ -21,9 +21,9 @@ debug: attacker/CMakeLists.txt
 release: attacker/CMakeLists.txt
 	@$(call prepare,Release)
 	@if [ "$(ENTROPY_TYPE)" = "random" ]; then \
-		while true; do ${BUILD_DIR}/a.out; done; \
+		while true; do sudo ${BUILD_DIR}/a.out; done; \
 	else \
-		${BUILD_DIR}/a.out; \
+		sudo ${BUILD_DIR}/a.out; \
 	fi
 
 init_db:

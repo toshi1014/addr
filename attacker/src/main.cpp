@@ -2,7 +2,6 @@
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <cassert>
-#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -23,13 +22,15 @@ using namespace boost::multiprecision;
 // param
 const uint128_t INITIAL_ENTROPY{"800000000000000000000000000000000000000"};
 #ifdef RELEASE_MODE
-#define INTERVAL 1000000
+#define INTERVAL 100000
 #define LIM 1000000000  // 340282366920938463463374607431768211455
 #else
 #define INTERVAL 1000
 #define LIM 10000
 #endif
 const bool VERBOSE_BRUTEFORCE = false;
+
+uint128_t (*func_gen_entropy)(uint128_t);
 // end param
 
 using nlohmann::json;
@@ -80,18 +81,7 @@ void ping(db::DBSqlite db) {
 void bruteforce(const uint32_t strength) {
     assert(strength == 128 || strength == 256);
 
-    uint128_t (*func_gen_entropy)(uint128_t);
-    func_gen_entropy =
-#ifdef ENTROPY_RANDOM
-        *bip39::entropy::CSPRNG;
-#elif defined(ENTROPY_INCREMENT)
-        *bip39::entropy::increment;
-#else
-        NULL;
-#endif
-
     db::DBSqlite db{};
-    db.open();
 
     std::cout << "Time\tStatus\t\titer/sec\tMem(KB)\t\tEntropy" << std::endl;
     double start_time = omp_get_wtime();
@@ -101,45 +91,42 @@ void bruteforce(const uint32_t strength) {
     uint128_t entropy = INITIAL_ENTROPY;
 
 #ifdef RELEASE_MODE
-#pragma omp parallel
+    utils::set_priority(-20);
+    omp_set_num_threads(omp_get_max_threads());
+#pragma omp parallel for schedule(dynamic, 1)
 #endif
-    {
-#ifdef RELEASE_MODE
-#pragma omp for
-#endif
-        for (size_t i = 0; i <= LIM; i++) {
-            entropy = func_gen_entropy(entropy);
-            const std::string addr = entropy2addr(entropy, VERBOSE_BRUTEFORCE);
+    for (size_t i = 0; i <= LIM; i++) {
+        entropy = func_gen_entropy(entropy);
+        const std::string addr = entropy2addr(entropy, VERBOSE_BRUTEFORCE);
 
-            if (db.has_balance(addr)) found(entropy);
-            // addr_pool.insert({entropy, addr});
+        if (db.has_balance(addr)) found(entropy);
+        // addr_pool.insert({entropy, addr});
 
-            // once in a while,
-            if (i % interval == 0) {
-                // 1. has_balance
-                if (!addr_pool.empty()) {
-                    utils::show_status(start_time, "searching...", NULL, NULL);
+        // once in a while,
+        if (i % interval == 0) {
+            // 1. has_balance
+            if (!addr_pool.empty()) {
+                utils::show_status(start_time, "searching...", NULL, NULL);
 
-                    std::vector<std::thread> threads;
+                std::vector<std::thread> threads;
 
-                    for (const auto& pair : addr_pool)
-                        threads.emplace_back(db::has_balance_x<uint128_t>,
-                                             std::ref(db),
-                                             /*entropy=*/pair.first,
-                                             /*addr=*/pair.second,
-                                             /*callback_found=*/found);
-                    for (auto& thread : threads) thread.join();
-                    addr_pool.clear();
-                }
-
-                // 2. ping
-                ping(db);
-
-                // 3. show iter/sec
-                utils::show_status(start_time, "interval", interval * ping_cnt,
-                                   entropy.str());
-                ping_cnt++;
+                for (const auto& pair : addr_pool)
+                    threads.emplace_back(db::has_balance_x<uint128_t>,
+                                         std::ref(db),
+                                         /*entropy=*/pair.first,
+                                         /*addr=*/pair.second,
+                                         /*callback_found=*/found);
+                for (auto& thread : threads) thread.join();
+                addr_pool.clear();
             }
+
+            // 2. ping
+            ping(db);
+
+            // 3. show iter/sec
+            utils::show_status(start_time, "interval", interval * ping_cnt,
+                               entropy.str());
+            ping_cnt++;
         }
     }
 
@@ -155,6 +142,33 @@ void test() {
             test_case["entropy"].get<std::string>(), /*verbose=*/true);
         assert(addr_eth == test_case["eth"].get<std::string>());
     }
+}
+
+void show_time_delta() {
+    db::DBSqlite db{};
+
+    utils::TimePoint time_start = std::chrono::high_resolution_clock::now();
+
+    const uint128_t entropy =
+        utils::deco_time_delta(func_gen_entropy, "func_gen_entropy")(entropy);
+    const std::string mnemonic = utils::deco_time_delta(
+        bip39::generate_mnemonic, "generate_mnemonic")(entropy);
+
+    const collections::HexArrayPtr seed_hexarr = utils::deco_time_delta(
+        bip39::mnemonic2seed, "mnemonic2seed\t")(mnemonic);
+
+    const std::string addr = utils::deco_time_delta(
+        hdkey::HDKey::seed2addr, "seed2addr\t")(*seed_hexarr);
+
+    for (size_t i = 0; i < 1; i++) {
+        time_start = std::chrono::high_resolution_clock::now();
+        if (db.has_balance(addr)) found(entropy);
+        utils::time_delta(time_start, "has_balance\t");
+    }
+
+    std::cout << "\n\nMnemonic:\t" << mnemonic << std::endl;
+    std::cout << "Seed:\t" << seed_hexarr->to_str() << std::endl;
+    std::cout << "Addr:\t" << addr << "\n" << std::endl;
 }
 
 }  // namespace
@@ -179,12 +193,21 @@ int main() {
     std::cout << ss.str() << std::endl;
     // end show info
 
+    func_gen_entropy =
+#ifdef ENTROPY_RANDOM
+        *bip39::entropy::CSPRNG;
+#elif defined(ENTROPY_INCREMENT)
+        *bip39::entropy::increment;
+#else
+        NULL;
+#endif
+
     bruteforce(128);
+    // test();
+    // show_time_delta();
 
     // const std::string entropy_hex = "b0e8160f51929bf718a3f28ddc15cf27";
     // const std::string expected_addr =
     //     "0x1ca21071b051df5901614be2a085cc0d655c7c6d";
     // assert(entropy2addr(entropy_hex, /*verbose*/ true) == expected_addr);
-
-    // test();
 }
